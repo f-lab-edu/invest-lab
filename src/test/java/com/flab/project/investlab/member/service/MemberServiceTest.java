@@ -23,7 +23,7 @@ class MemberServiceTest {
     private final MemberService memberService = new MemberService(memberRepository, passwordEncoder);
 
     @Test
-    void register_normalizesEmailAndHashesPassword() {
+    void 회원가입하면_이메일을_정규화하고_비밀번호를_암호화한다() {
         // Given
         when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -41,7 +41,7 @@ class MemberServiceTest {
     }
 
     @Test
-    void register_rejectsDuplicatedEmail() {
+    void 중복된_이메일로_회원가입하면_예외가_발생한다() {
         // Given
         when(memberRepository.existsByEmail("member@example.com")).thenReturn(true);
 
@@ -55,7 +55,7 @@ class MemberServiceTest {
     }
 
     @Test
-    void register_rejectsDuplicatedNickname() {
+    void 중복된_닉네임으로_회원가입하면_예외가_발생한다() {
         // Given
         when(memberRepository.existsByNickname("investor")).thenReturn(true);
 

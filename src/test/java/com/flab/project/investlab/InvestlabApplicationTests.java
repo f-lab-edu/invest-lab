@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Import;
 class InvestlabApplicationTests {
 
     @Test
-    void contextLoads() {
+    void 애플리케이션_컨텍스트를_불러온다() {
     }
 
 }
