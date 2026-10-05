@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 @Service
@@ -24,20 +25,22 @@ public class MemberService {
 
     @Transactional
     public Member register(String email, String rawPassword, String nickname) {
-        String normalizedEmail = email.trim().toLowerCase(Locale.ROOT);
-        String normalizedNickname = nickname.trim();
+        String normalizedEmail = email.toLowerCase(Locale.ROOT);
 
+        if (rawPassword.getBytes(StandardCharsets.UTF_8).length > 72) {
+            throw new MemberException(MemberErrorCode.PASSWORD_TOO_LONG);
+        }
         if (memberRepository.existsByEmail(normalizedEmail)) {
             throw new MemberException(MemberErrorCode.EMAIL_DUPLICATED);
         }
-        if (memberRepository.existsByNickname(normalizedNickname)) {
+        if (memberRepository.existsByNickname(nickname)) {
             throw new MemberException(MemberErrorCode.NICKNAME_DUPLICATED);
         }
 
         Member member = new Member(
                 normalizedEmail,
                 passwordEncoder.encode(rawPassword),
-                normalizedNickname
+                nickname
         );
         try {
             return memberRepository.save(member);

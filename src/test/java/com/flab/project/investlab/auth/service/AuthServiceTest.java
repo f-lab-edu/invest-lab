@@ -51,7 +51,7 @@ class AuthServiceTest {
         when(refreshSessionRepository.findByMemberId(1L)).thenReturn(Optional.empty());
 
         // When
-        LoginResult result = authService.login(" MEMBER@example.com ", "password1234");
+        LoginResult result = authService.login("MEMBER@example.com", "password1234");
 
         // Then
         assertThat(result.accessToken()).isEqualTo("access-token");

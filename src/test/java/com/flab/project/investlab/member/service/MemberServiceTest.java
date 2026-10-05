@@ -31,7 +31,7 @@ class MemberServiceTest {
         when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
-        memberService.register("  MEMBER@Example.COM ", "password1234", " investor ");
+        memberService.register("MEMBER@Example.COM", "password1234", "investor");
 
         // Then
         ArgumentCaptor<Member> captor = ArgumentCaptor.forClass(Member.class);
@@ -69,6 +69,20 @@ class MemberServiceTest {
                 .isInstanceOf(MemberException.class)
                 .extracting(exception -> ((MemberException) exception).getErrorCode())
                 .isEqualTo(MemberErrorCode.NICKNAME_DUPLICATED.getCode());
+    }
+
+    @Test
+    void 비밀번호가_72바이트를_초과하면_회원가입을_거부한다() {
+        // Given
+        String password = "가".repeat(25);
+
+        // When & Then
+        assertThatThrownBy(() ->
+                memberService.register("member@example.com", password, "investor")
+        )
+                .isInstanceOf(MemberException.class)
+                .extracting(exception -> ((MemberException) exception).getErrorCode())
+                .isEqualTo(MemberErrorCode.PASSWORD_TOO_LONG.getCode());
     }
 
     @Test

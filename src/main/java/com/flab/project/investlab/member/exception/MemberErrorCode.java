@@ -24,6 +24,11 @@ public enum MemberErrorCode implements ErrorCode {
             "MEMBER_NOT_FOUND",
             HttpStatus.NOT_FOUND,
             "회원을 찾을 수 없습니다."
+    ),
+    PASSWORD_TOO_LONG(
+            "MEMBER_PASSWORD_TOO_LONG",
+            HttpStatus.BAD_REQUEST,
+            "비밀번호는 UTF-8 기준 72바이트 이하여야 합니다."
     );
 
     private final String code;

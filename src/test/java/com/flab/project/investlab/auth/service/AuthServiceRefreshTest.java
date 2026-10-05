@@ -40,19 +40,19 @@ class AuthServiceRefreshTest {
         Member member = mock(Member.class);
         RefreshSession refreshSession = mock(RefreshSession.class);
         Instant now = Instant.parse("2026-10-05T00:00:00Z");
-        Instant newExpiresAt = Instant.parse("2026-10-12T00:00:00Z");
+        Instant expiresAt = Instant.parse("2026-10-12T00:00:00Z");
         when(member.getId()).thenReturn(1L);
         when(refreshTokenProvider.hash("refresh-token")).thenReturn("refresh-token-hash");
         when(refreshSessionRepository.findByTokenHash("refresh-token-hash"))
                 .thenReturn(Optional.of(refreshSession));
         when(refreshSession.isExpired(now)).thenReturn(false);
         when(refreshSession.getMember()).thenReturn(member);
+        when(refreshSession.getExpiresAt()).thenReturn(expiresAt);
         when(refreshTokenProvider.now()).thenReturn(now);
         when(accessTokenProvider.create(1L)).thenReturn("new-access-token");
         when(accessTokenProvider.expiresInSeconds()).thenReturn(1800L);
         when(refreshTokenProvider.create()).thenReturn("new-refresh-token");
         when(refreshTokenProvider.hash("new-refresh-token")).thenReturn("new-refresh-token-hash");
-        when(refreshTokenProvider.expiresAt()).thenReturn(newExpiresAt);
 
         // When
         LoginResult result = authService.refresh("refresh-token");
@@ -60,7 +60,7 @@ class AuthServiceRefreshTest {
         // Then
         assertThat(result.accessToken()).isEqualTo("new-access-token");
         assertThat(result.refreshToken()).isEqualTo("new-refresh-token");
-        verify(refreshSession).rotate("new-refresh-token-hash", newExpiresAt);
+        verify(refreshSession).rotate("new-refresh-token-hash", expiresAt);
         verify(refreshSessionRepository).save(refreshSession);
     }
 

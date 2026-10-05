@@ -41,7 +41,7 @@ public class AuthService {
 
     @Transactional
     public LoginResult login(String email, String rawPassword) {
-        String normalizedEmail = email.trim().toLowerCase(Locale.ROOT);
+        String normalizedEmail = email.toLowerCase(Locale.ROOT);
         Member member = memberRepository.findByEmail(normalizedEmail)
                 .filter(foundMember -> passwordEncoder.matches(rawPassword, foundMember.getPasswordHash()))
                 .orElseThrow(() -> new AuthException(AuthErrorCode.LOGIN_FAILED));
@@ -81,7 +81,7 @@ public class AuthService {
         String newAccessToken = accessTokenProvider.create(refreshSession.getMember().getId());
         String newRefreshToken = refreshTokenProvider.create();
         String newRefreshTokenHash = refreshTokenProvider.hash(newRefreshToken);
-        refreshSession.rotate(newRefreshTokenHash, refreshTokenProvider.expiresAt());
+        refreshSession.rotate(newRefreshTokenHash, refreshSession.getExpiresAt());
         refreshSessionRepository.save(refreshSession);
 
         return new LoginResult(

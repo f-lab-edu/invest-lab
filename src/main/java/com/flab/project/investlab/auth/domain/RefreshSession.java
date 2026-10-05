@@ -27,7 +27,7 @@ public class RefreshSession {
     @JoinColumn(name = "member_id", nullable = false, unique = true)
     private Member member;
 
-    @Column(name = "token_hash", nullable = false, length = 64)
+    @Column(name = "token_hash", nullable = false, unique = true, length = 64)
     private String tokenHash;
 
     @Column(name = "previous_token_hash", length = 64)
