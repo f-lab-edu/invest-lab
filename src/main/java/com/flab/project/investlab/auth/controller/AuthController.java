@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.CookieValue;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -28,6 +29,25 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
         LoginResult result = authService.login(request.email(), request.password());
+        TokenResponse response = TokenResponse.bearer(
+                result.accessToken(),
+                result.accessTokenExpiresIn()
+        );
+
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        refreshCookieManager.create(result.refreshToken()).toString()
+                )
+                .body(response);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenResponse> refresh(
+            @CookieValue(name = RefreshCookieManager.COOKIE_NAME, required = false)
+            String refreshToken
+    ) {
+        LoginResult result = authService.refresh(refreshToken);
         TokenResponse response = TokenResponse.bearer(
                 result.accessToken(),
                 result.accessTokenExpiresIn()

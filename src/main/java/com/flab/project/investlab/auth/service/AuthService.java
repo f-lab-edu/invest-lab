@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Locale;
+import java.util.Optional;
 
 @Service
 public class AuthService {
@@ -52,7 +53,7 @@ public class AuthService {
 
         RefreshSession refreshSession = refreshSessionRepository.findByMemberId(member.getId())
                 .orElseGet(() -> new RefreshSession(member, refreshTokenHash, expiresAt));
-        refreshSession.rotate(refreshTokenHash, expiresAt);
+        refreshSession.replaceForLogin(refreshTokenHash, expiresAt);
         refreshSessionRepository.save(refreshSession);
 
         return new LoginResult(
@@ -60,5 +61,43 @@ public class AuthService {
                 refreshToken,
                 accessTokenProvider.expiresInSeconds()
         );
+    }
+
+    @Transactional(noRollbackFor = AuthException.class)
+    public LoginResult refresh(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new AuthException(AuthErrorCode.REFRESH_TOKEN_INVALID);
+        }
+
+        String tokenHash = refreshTokenProvider.hash(refreshToken);
+        RefreshSession refreshSession = refreshSessionRepository.findByTokenHash(tokenHash)
+                .orElseGet(() -> handleInvalidRefreshToken(tokenHash));
+
+        if (refreshSession.isExpired(refreshTokenProvider.now())) {
+            refreshSessionRepository.delete(refreshSession);
+            throw new AuthException(AuthErrorCode.REFRESH_TOKEN_EXPIRED);
+        }
+
+        String newAccessToken = accessTokenProvider.create(refreshSession.getMember().getId());
+        String newRefreshToken = refreshTokenProvider.create();
+        String newRefreshTokenHash = refreshTokenProvider.hash(newRefreshToken);
+        refreshSession.rotate(newRefreshTokenHash, refreshTokenProvider.expiresAt());
+        refreshSessionRepository.save(refreshSession);
+
+        return new LoginResult(
+                newAccessToken,
+                newRefreshToken,
+                accessTokenProvider.expiresInSeconds()
+        );
+    }
+
+    private RefreshSession handleInvalidRefreshToken(String tokenHash) {
+        Optional<RefreshSession> reusedSession =
+                refreshSessionRepository.findByPreviousTokenHash(tokenHash);
+        if (reusedSession.isPresent()) {
+            refreshSessionRepository.delete(reusedSession.get());
+            throw new AuthException(AuthErrorCode.REFRESH_TOKEN_REUSED);
+        }
+        throw new AuthException(AuthErrorCode.REFRESH_TOKEN_INVALID);
     }
 }

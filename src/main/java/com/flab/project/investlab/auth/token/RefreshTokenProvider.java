@@ -44,4 +44,8 @@ public class RefreshTokenProvider {
     public Instant expiresAt() {
         return clock.instant().plus(authProperties.refreshTokenTtl());
     }
+
+    public Instant now() {
+        return clock.instant();
+    }
 }

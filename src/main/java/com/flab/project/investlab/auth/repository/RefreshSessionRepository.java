@@ -11,5 +11,7 @@ public interface RefreshSessionRepository extends JpaRepository<RefreshSession, 
 
     Optional<RefreshSession> findByTokenHash(String tokenHash);
 
+    Optional<RefreshSession> findByPreviousTokenHash(String previousTokenHash);
+
     void deleteByMemberId(Long memberId);
 }

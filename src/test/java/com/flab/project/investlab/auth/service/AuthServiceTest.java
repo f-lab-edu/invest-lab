@@ -83,7 +83,7 @@ class AuthServiceTest {
         authService.login("member@example.com", "password1234");
 
         // Then
-        verify(refreshSession).rotate("new-refresh-token-hash", expiresAt);
+        verify(refreshSession).replaceForLogin("new-refresh-token-hash", expiresAt);
         verify(refreshSessionRepository).save(refreshSession);
     }
 
