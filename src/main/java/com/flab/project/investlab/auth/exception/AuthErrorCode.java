@@ -1,0 +1,38 @@
+package com.flab.project.investlab.auth.exception;
+
+import com.flab.project.investlab.common.error.ErrorCode;
+import org.springframework.http.HttpStatus;
+
+public enum AuthErrorCode implements ErrorCode {
+
+    LOGIN_FAILED(
+            "AUTH_LOGIN_FAILED",
+            HttpStatus.UNAUTHORIZED,
+            "이메일 또는 비밀번호가 올바르지 않습니다."
+    );
+
+    private final String code;
+    private final HttpStatus httpStatus;
+    private final String message;
+
+    AuthErrorCode(String code, HttpStatus httpStatus, String message) {
+        this.code = code;
+        this.httpStatus = httpStatus;
+        this.message = message;
+    }
+
+    @Override
+    public String getCode() {
+        return code;
+    }
+
+    @Override
+    public HttpStatus getHttpStatus() {
+        return httpStatus;
+    }
+
+    @Override
+    public String getMessage() {
+        return message;
+    }
+}
