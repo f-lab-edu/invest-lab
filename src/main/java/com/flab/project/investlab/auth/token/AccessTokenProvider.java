@@ -27,7 +27,7 @@ public class AccessTokenProvider {
     public String create(Long memberId) {
         Instant issuedAt = clock.instant();
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer("investlab")
+                .issuer(authProperties.jwtIssuer())
                 .subject(memberId.toString())
                 .issuedAt(issuedAt)
                 .expiresAt(issuedAt.plus(authProperties.accessTokenTtl()))

@@ -45,4 +45,10 @@ public class MemberService {
             throw new MemberException(MemberErrorCode.MEMBER_DUPLICATED, exception);
         }
     }
+
+    @Transactional(readOnly = true)
+    public Member getById(Long memberId) {
+        return memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
+    }
 }

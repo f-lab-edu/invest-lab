@@ -7,6 +7,7 @@ import java.time.Duration;
 @ConfigurationProperties(prefix = "app.auth")
 public record AuthProperties(
         String jwtSecret,
+        String jwtIssuer,
         Duration accessTokenTtl,
         Duration refreshTokenTtl,
         boolean refreshCookieSecure,

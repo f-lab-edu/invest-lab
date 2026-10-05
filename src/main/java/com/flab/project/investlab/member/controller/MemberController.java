@@ -6,6 +6,9 @@ import com.flab.project.investlab.member.dto.MemberResponse;
 import com.flab.project.investlab.member.service.MemberService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,6 +33,12 @@ public class MemberController {
                 request.password(),
                 request.nickname()
         );
+        return MemberResponse.from(member);
+    }
+
+    @GetMapping("/me")
+    public MemberResponse getCurrentMember(@AuthenticationPrincipal Jwt jwt) {
+        Member member = memberService.getById(Long.valueOf(jwt.getSubject()));
         return MemberResponse.from(member);
     }
 }

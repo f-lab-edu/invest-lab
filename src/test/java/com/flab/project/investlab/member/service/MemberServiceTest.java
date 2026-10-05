@@ -6,8 +6,11 @@ import com.flab.project.investlab.member.exception.MemberException;
 import com.flab.project.investlab.member.repository.MemberRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -66,5 +69,33 @@ class MemberServiceTest {
                 .isInstanceOf(MemberException.class)
                 .extracting(exception -> ((MemberException) exception).getErrorCode())
                 .isEqualTo(MemberErrorCode.NICKNAME_DUPLICATED.getCode());
+    }
+
+    @Test
+    void 회원_ID로_현재_회원을_조회한다() {
+        // Given
+        Member member = new Member("member@example.com", "encoded-password", "investor");
+        when(memberRepository.findById(1L)).thenReturn(Optional.of(member));
+
+        // When
+        Member foundMember = memberService.getById(1L);
+
+        // Then
+        assertThat(foundMember).isSameAs(member);
+    }
+
+    @Test
+    void 존재하지_않는_회원_ID를_조회하면_예외가_발생한다() {
+        // Given
+        when(memberRepository.findById(1L)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> memberService.getById(1L))
+                .isInstanceOf(MemberException.class)
+                .satisfies(exception -> {
+                    MemberException memberException = (MemberException) exception;
+                    assertThat(memberException.getErrorCode()).isEqualTo("MEMBER_NOT_FOUND");
+                    assertThat(memberException.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                });
     }
 }

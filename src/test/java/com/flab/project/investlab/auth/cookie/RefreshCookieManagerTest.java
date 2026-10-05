@@ -15,6 +15,7 @@ class RefreshCookieManagerTest {
         // Given
         AuthProperties properties = new AuthProperties(
                 "investlab-local-jwt-secret-key-32bytes",
+                "https://api.investlab.local",
                 Duration.ofMinutes(30),
                 Duration.ofDays(7),
                 true,
