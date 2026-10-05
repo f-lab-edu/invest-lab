@@ -1,8 +1,8 @@
 package com.flab.project.investlab.member.service;
 
-import com.flab.project.investlab.common.error.ApiException;
-import com.flab.project.investlab.common.error.ErrorCode;
 import com.flab.project.investlab.member.domain.Member;
+import com.flab.project.investlab.member.exception.MemberErrorCode;
+import com.flab.project.investlab.member.exception.MemberException;
 import com.flab.project.investlab.member.repository.MemberRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -49,9 +49,9 @@ class MemberServiceTest {
         assertThatThrownBy(() ->
                 memberService.register("member@example.com", "password1234", "investor")
         )
-                .isInstanceOf(ApiException.class)
-                .extracting(exception -> ((ApiException) exception).getErrorCode())
-                .isEqualTo(ErrorCode.MEMBER_EMAIL_DUPLICATED);
+                .isInstanceOf(MemberException.class)
+                .extracting(exception -> ((MemberException) exception).getErrorCode())
+                .isEqualTo(MemberErrorCode.EMAIL_DUPLICATED.getCode());
     }
 
     @Test
@@ -63,8 +63,8 @@ class MemberServiceTest {
         assertThatThrownBy(() ->
                 memberService.register("member@example.com", "password1234", "investor")
         )
-                .isInstanceOf(ApiException.class)
-                .extracting(exception -> ((ApiException) exception).getErrorCode())
-                .isEqualTo(ErrorCode.MEMBER_NICKNAME_DUPLICATED);
+                .isInstanceOf(MemberException.class)
+                .extracting(exception -> ((MemberException) exception).getErrorCode())
+                .isEqualTo(MemberErrorCode.NICKNAME_DUPLICATED.getCode());
     }
 }
