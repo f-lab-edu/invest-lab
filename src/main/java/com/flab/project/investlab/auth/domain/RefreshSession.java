@@ -69,7 +69,7 @@ public class RefreshSession {
 
     @PrePersist
     void onCreate() {
-        Instant now = Instant.now();
+        final Instant now = Instant.now();
         createdAt = now;
         updatedAt = now;
     }
@@ -77,10 +77,6 @@ public class RefreshSession {
     @PreUpdate
     void onUpdate() {
         updatedAt = Instant.now();
-    }
-
-    public Long getId() {
-        return id;
     }
 
     public Member getMember() {

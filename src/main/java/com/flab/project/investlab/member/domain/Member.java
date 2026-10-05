@@ -45,7 +45,7 @@ public class Member {
 
     @PrePersist
     void onCreate() {
-        Instant now = Instant.now();
+        final Instant now = Instant.now();
         createdAt = now;
         updatedAt = now;
     }
@@ -69,13 +69,5 @@ public class Member {
 
     public String getNickname() {
         return nickname;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
     }
 }

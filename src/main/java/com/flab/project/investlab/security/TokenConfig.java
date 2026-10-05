@@ -39,7 +39,7 @@ public class TokenConfig {
 
     @Bean
     JwtDecoder jwtDecoder(SecretKey secretKey, AuthProperties authProperties) {
-        NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(secretKey)
+        final NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(secretKey)
                 .macAlgorithm(MacAlgorithm.HS256)
                 .build();
         jwtDecoder.setJwtValidator(

@@ -28,7 +28,7 @@ public class MemberController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public MemberResponse register(@Valid @RequestBody MemberCreateRequest request) {
-        Member member = memberService.register(
+        final Member member = memberService.register(
                 request.email(),
                 request.password(),
                 request.nickname()
@@ -38,7 +38,7 @@ public class MemberController {
 
     @GetMapping("/me")
     public MemberResponse getCurrentMember(@AuthenticationPrincipal Jwt jwt) {
-        Member member = memberService.getById(Long.valueOf(jwt.getSubject()));
+        final Member member = memberService.getById(Long.valueOf(jwt.getSubject()));
         return MemberResponse.from(member);
     }
 }

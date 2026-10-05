@@ -1,5 +1,6 @@
 package com.flab.project.investlab.common.error;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -10,7 +11,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     ProblemDetail handleBusinessException(BusinessException exception) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+        final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 exception.getHttpStatus(),
                 exception.getMessage()
         );
@@ -20,15 +21,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ProblemDetail handleValidationException() {
-        return createProblemDetail(CommonErrorCode.VALIDATION_FAILED);
-    }
-
-    private ProblemDetail createProblemDetail(ErrorCode errorCode) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
-                errorCode.getHttpStatus(),
-                errorCode.getMessage()
+        final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                "요청값이 올바르지 않습니다."
         );
-        problemDetail.setProperty("code", errorCode.getCode());
+        problemDetail.setProperty("code", "VALIDATION_FAILED");
         return problemDetail;
     }
 }

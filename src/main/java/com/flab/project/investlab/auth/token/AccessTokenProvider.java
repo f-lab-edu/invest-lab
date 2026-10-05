@@ -25,14 +25,14 @@ public class AccessTokenProvider {
     }
 
     public String create(Long memberId) {
-        Instant issuedAt = clock.instant();
-        JwtClaimsSet claims = JwtClaimsSet.builder()
+        final Instant issuedAt = clock.instant();
+        final JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer(authProperties.jwtIssuer())
                 .subject(memberId.toString())
                 .issuedAt(issuedAt)
                 .expiresAt(issuedAt.plus(authProperties.accessTokenTtl()))
                 .build();
-        JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
+        final JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
         return jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
     }
 

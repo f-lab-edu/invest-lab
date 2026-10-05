@@ -1,7 +1,6 @@
 package com.flab.project.investlab.security;
 
 import com.flab.project.investlab.auth.exception.AuthErrorCode;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;
@@ -27,9 +26,9 @@ public class SecurityAuthenticationEntryPoint implements AuthenticationEntryPoin
             HttpServletRequest request,
             HttpServletResponse response,
             AuthenticationException authenticationException
-    ) throws IOException, ServletException {
-        AuthErrorCode errorCode = AuthErrorCode.ACCESS_TOKEN_INVALID;
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+    ) throws IOException {
+        final AuthErrorCode errorCode = AuthErrorCode.ACCESS_TOKEN_INVALID;
+        final ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
                 errorCode.getHttpStatus(),
                 errorCode.getMessage()
         );

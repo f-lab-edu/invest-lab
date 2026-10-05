@@ -7,6 +7,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.security.web.SecurityFilterChain;
@@ -18,6 +20,11 @@ import java.util.List;
 
 @Configuration
 public class SecurityConfig {
+
+    @Bean
+    PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
     @Bean
     SecurityFilterChain securityFilterChain(
@@ -48,7 +55,7 @@ public class SecurityConfig {
     // 로그인·재발급·로그아웃은 Access Token 없이 동작하므로 만료된 Bearer 헤더가 있어도 거부하지 않는다.
     @Bean
     BearerTokenResolver bearerTokenResolver() {
-        DefaultBearerTokenResolver defaultResolver = new DefaultBearerTokenResolver();
+        final DefaultBearerTokenResolver defaultResolver = new DefaultBearerTokenResolver();
         return request -> request.getRequestURI().startsWith("/api/v1/auth/")
                 ? null
                 : defaultResolver.resolve(request);
@@ -56,7 +63,7 @@ public class SecurityConfig {
 
     @Bean
     CorsConfigurationSource corsConfigurationSource(CorsProperties corsProperties) {
-        CorsConfiguration configuration = new CorsConfiguration();
+        final CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(corsProperties.allowedOrigin()));
         configuration.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
         configuration.setAllowedHeaders(List.of(
@@ -65,7 +72,7 @@ public class SecurityConfig {
         ));
         configuration.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }

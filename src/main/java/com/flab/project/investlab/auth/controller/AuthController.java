@@ -29,8 +29,8 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
-        LoginResult result = authService.login(request.email(), request.password());
-        TokenResponse response = TokenResponse.bearer(
+        final LoginResult result = authService.login(request.email(), request.password());
+        final TokenResponse response = TokenResponse.bearer(
                 result.accessToken(),
                 result.accessTokenExpiresIn()
         );
@@ -48,8 +48,8 @@ public class AuthController {
             @CookieValue(name = RefreshCookieManager.COOKIE_NAME, required = false)
             String refreshToken
     ) {
-        LoginResult result = authService.refresh(refreshToken);
-        TokenResponse response = TokenResponse.bearer(
+        final LoginResult result = authService.refresh(refreshToken);
+        final TokenResponse response = TokenResponse.bearer(
                 result.accessToken(),
                 result.accessTokenExpiresIn()
         );

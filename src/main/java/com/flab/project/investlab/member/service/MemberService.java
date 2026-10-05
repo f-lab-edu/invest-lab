@@ -25,7 +25,7 @@ public class MemberService {
 
     @Transactional
     public Member register(String email, String rawPassword, String nickname) {
-        String normalizedEmail = email.toLowerCase(Locale.ROOT);
+        final String normalizedEmail = email.toLowerCase(Locale.ROOT);
 
         if (rawPassword.getBytes(StandardCharsets.UTF_8).length > 72) {
             throw new MemberException(MemberErrorCode.PASSWORD_TOO_LONG);
@@ -37,7 +37,7 @@ public class MemberService {
             throw new MemberException(MemberErrorCode.NICKNAME_DUPLICATED);
         }
 
-        Member member = new Member(
+        final Member member = new Member(
                 normalizedEmail,
                 passwordEncoder.encode(rawPassword),
                 nickname

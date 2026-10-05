@@ -27,14 +27,14 @@ public class RefreshTokenProvider {
     }
 
     public String create() {
-        byte[] bytes = new byte[TOKEN_BYTES];
+        final byte[] bytes = new byte[TOKEN_BYTES];
         secureRandom.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
     public String hash(String token) {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            final MessageDigest digest = MessageDigest.getInstance("SHA-256");
             return HexFormat.of().formatHex(digest.digest(token.getBytes(StandardCharsets.UTF_8)));
         } catch (NoSuchAlgorithmException exception) {
             throw new IllegalStateException("SHA-256 algorithm is unavailable", exception);
