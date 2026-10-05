@@ -37,17 +37,18 @@ class AuthServiceRefreshTest {
     @Test
     void 유효한_리프레시_토큰을_재발급하면_토큰을_회전한다() {
         // Given
-        Member member = mock(Member.class);
-        RefreshSession refreshSession = mock(RefreshSession.class);
-        Instant now = Instant.parse("2026-10-05T00:00:00Z");
-        Instant expiresAt = Instant.parse("2026-10-12T00:00:00Z");
+        final Member member = mock(Member.class);
+        final Instant now = Instant.parse("2026-10-05T00:00:00Z");
+        final Instant expiresAt = Instant.parse("2026-10-12T00:00:00Z");
+        final RefreshSession refreshSession = new RefreshSession(
+                member,
+                "refresh-token-hash",
+                expiresAt
+        );
         when(member.getId()).thenReturn(1L);
         when(refreshTokenProvider.hash("refresh-token")).thenReturn("refresh-token-hash");
         when(refreshSessionRepository.findByTokenHash("refresh-token-hash"))
                 .thenReturn(Optional.of(refreshSession));
-        when(refreshSession.isExpired(now)).thenReturn(false);
-        when(refreshSession.getMember()).thenReturn(member);
-        when(refreshSession.getExpiresAt()).thenReturn(expiresAt);
         when(refreshTokenProvider.now()).thenReturn(now);
         when(accessTokenProvider.create(1L)).thenReturn("new-access-token");
         when(accessTokenProvider.expiresInSeconds()).thenReturn(1800L);
@@ -55,25 +56,27 @@ class AuthServiceRefreshTest {
         when(refreshTokenProvider.hash("new-refresh-token")).thenReturn("new-refresh-token-hash");
 
         // When
-        LoginResult result = authService.refresh("refresh-token");
+        final LoginResult result = authService.refresh("refresh-token");
 
         // Then
         assertThat(result.accessToken()).isEqualTo("new-access-token");
         assertThat(result.refreshToken()).isEqualTo("new-refresh-token");
-        verify(refreshSession).rotate("new-refresh-token-hash", expiresAt);
+        assertThat(refreshSession.getPreviousTokenHash()).isEqualTo("refresh-token-hash");
+        assertThat(refreshSession.getTokenHash()).isEqualTo("new-refresh-token-hash");
+        assertThat(refreshSession.getExpiresAt()).isEqualTo(expiresAt);
         verify(refreshSessionRepository).save(refreshSession);
     }
 
     @Test
     void 만료된_리프레시_토큰은_세션을_삭제하고_재발급을_거부한다() {
         // Given
-        RefreshSession refreshSession = mock(RefreshSession.class);
-        Instant now = Instant.parse("2026-10-05T00:00:00Z");
+        final Member member = new Member("member@example.com", "encoded-password", "investor");
+        final Instant now = Instant.parse("2026-10-05T00:00:00Z");
+        final RefreshSession refreshSession = new RefreshSession(member, "expired-token-hash", now);
         when(refreshTokenProvider.hash("expired-token")).thenReturn("expired-token-hash");
         when(refreshSessionRepository.findByTokenHash("expired-token-hash"))
                 .thenReturn(Optional.of(refreshSession));
         when(refreshTokenProvider.now()).thenReturn(now);
-        when(refreshSession.isExpired(now)).thenReturn(true);
 
         // When & Then
         assertThatThrownBy(() -> authService.refresh("expired-token"))
@@ -86,7 +89,7 @@ class AuthServiceRefreshTest {
     @Test
     void 이미_사용한_리프레시_토큰은_현재_세션을_삭제하고_재발급을_거부한다() {
         // Given
-        RefreshSession refreshSession = mock(RefreshSession.class);
+        final RefreshSession refreshSession = mock(RefreshSession.class);
         when(refreshTokenProvider.hash("reused-token")).thenReturn("reused-token-hash");
         when(refreshSessionRepository.findByTokenHash("reused-token-hash"))
                 .thenReturn(Optional.empty());

@@ -33,7 +33,7 @@ class AuthServiceLogoutTest {
     @Test
     void 로그아웃하면_현재_리프레시_세션을_삭제한다() {
         // Given
-        RefreshSession refreshSession = mock(RefreshSession.class);
+        final RefreshSession refreshSession = mock(RefreshSession.class);
         when(refreshTokenProvider.hash("refresh-token")).thenReturn("refresh-token-hash");
         when(refreshSessionRepository.findByTokenHash("refresh-token-hash"))
                 .thenReturn(Optional.of(refreshSession));
@@ -48,7 +48,7 @@ class AuthServiceLogoutTest {
     @Test
     void 직전_리프레시_토큰으로_로그아웃해도_현재_세션을_삭제한다() {
         // Given
-        RefreshSession refreshSession = mock(RefreshSession.class);
+        final RefreshSession refreshSession = mock(RefreshSession.class);
         when(refreshTokenProvider.hash("previous-token")).thenReturn("previous-token-hash");
         when(refreshSessionRepository.findByTokenHash("previous-token-hash"))
                 .thenReturn(Optional.empty());

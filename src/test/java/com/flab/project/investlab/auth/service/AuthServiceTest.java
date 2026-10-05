@@ -39,8 +39,8 @@ class AuthServiceTest {
     @Test
     void 로그인하면_액세스_토큰과_리프레시_세션을_생성한다() {
         // Given
-        Member member = member(1L, "encoded-password");
-        Instant expiresAt = Instant.parse("2026-10-12T00:00:00Z");
+        final Member member = member(1L, "encoded-password");
+        final Instant expiresAt = Instant.parse("2026-10-12T00:00:00Z");
         when(memberRepository.findByEmail("member@example.com")).thenReturn(Optional.of(member));
         when(passwordEncoder.matches("password1234", "encoded-password")).thenReturn(true);
         when(accessTokenProvider.create(1L)).thenReturn("access-token");
@@ -51,14 +51,14 @@ class AuthServiceTest {
         when(refreshSessionRepository.findByMemberId(1L)).thenReturn(Optional.empty());
 
         // When
-        LoginResult result = authService.login("MEMBER@example.com", "password1234");
+        final LoginResult result = authService.login("MEMBER@example.com", "password1234");
 
         // Then
         assertThat(result.accessToken()).isEqualTo("access-token");
         assertThat(result.refreshToken()).isEqualTo("refresh-token");
         assertThat(result.accessTokenExpiresIn()).isEqualTo(1800L);
 
-        ArgumentCaptor<RefreshSession> captor = ArgumentCaptor.forClass(RefreshSession.class);
+        final ArgumentCaptor<RefreshSession> captor = ArgumentCaptor.forClass(RefreshSession.class);
         verify(refreshSessionRepository).save(captor.capture());
         assertThat(captor.getValue().getMember()).isSameAs(member);
         assertThat(captor.getValue().getTokenHash()).isEqualTo("refresh-token-hash");
@@ -68,9 +68,14 @@ class AuthServiceTest {
     @Test
     void 다시_로그인하면_기존_리프레시_세션을_교체한다() {
         // Given
-        Member member = member(1L, "encoded-password");
-        RefreshSession refreshSession = mock(RefreshSession.class);
-        Instant expiresAt = Instant.parse("2026-10-12T00:00:00Z");
+        final Member member = member(1L, "encoded-password");
+        final Instant expiresAt = Instant.parse("2026-10-12T00:00:00Z");
+        final RefreshSession refreshSession = new RefreshSession(
+                member,
+                "current-refresh-token-hash",
+                expiresAt
+        );
+        refreshSession.rotate("latest-refresh-token-hash", expiresAt);
         when(memberRepository.findByEmail("member@example.com")).thenReturn(Optional.of(member));
         when(passwordEncoder.matches("password1234", "encoded-password")).thenReturn(true);
         when(accessTokenProvider.create(1L)).thenReturn("access-token");
@@ -83,7 +88,9 @@ class AuthServiceTest {
         authService.login("member@example.com", "password1234");
 
         // Then
-        verify(refreshSession).replaceForLogin("new-refresh-token-hash", expiresAt);
+        assertThat(refreshSession.getTokenHash()).isEqualTo("new-refresh-token-hash");
+        assertThat(refreshSession.getPreviousTokenHash()).isNull();
+        assertThat(refreshSession.getExpiresAt()).isEqualTo(expiresAt);
         verify(refreshSessionRepository).save(refreshSession);
     }
 
@@ -99,7 +106,7 @@ class AuthServiceTest {
     @Test
     void 잘못된_비밀번호로_로그인하면_동일한_로그인_실패_예외가_발생한다() {
         // Given
-        Member member = member(1L, "encoded-password");
+        final Member member = member(1L, "encoded-password");
         when(memberRepository.findByEmail("member@example.com")).thenReturn(Optional.of(member));
         when(passwordEncoder.matches("wrong-password", "encoded-password")).thenReturn(false);
 
@@ -108,7 +115,7 @@ class AuthServiceTest {
     }
 
     private Member member(Long id, String passwordHash) {
-        Member member = mock(Member.class);
+        final Member member = mock(Member.class);
         when(member.getId()).thenReturn(id);
         when(member.getPasswordHash()).thenReturn(passwordHash);
         return member;
@@ -118,7 +125,7 @@ class AuthServiceTest {
         assertThatThrownBy(action::run)
                 .isInstanceOf(AuthException.class)
                 .satisfies(exception -> {
-                    AuthException authException = (AuthException) exception;
+                    final AuthException authException = (AuthException) exception;
                     assertThat(authException.getErrorCode()).isEqualTo("AUTH_LOGIN_FAILED");
                     assertThat(authException.getHttpStatus()).isEqualTo(HttpStatus.UNAUTHORIZED);
                 });

@@ -24,13 +24,13 @@ class AccessTokenProviderTest {
     @Test
     void 액세스_토큰은_회원_ID와_30분_만료시간을_포함한다() {
         // Given
-        String secret = "investlab-local-jwt-secret-key-32bytes";
-        SecretKey secretKey = new SecretKeySpec(
+        final String secret = "investlab-local-jwt-secret-key-32bytes";
+        final SecretKey secretKey = new SecretKeySpec(
                 secret.getBytes(StandardCharsets.UTF_8),
                 "HmacSHA256"
         );
-        Instant issuedAt = Instant.parse("2026-10-05T00:00:00Z");
-        AuthProperties properties = new AuthProperties(
+        final Instant issuedAt = Instant.parse("2026-10-05T00:00:00Z");
+        final AuthProperties properties = new AuthProperties(
                 secret,
                 "https://api.investlab.local",
                 Duration.ofMinutes(30),
@@ -38,26 +38,27 @@ class AccessTokenProviderTest {
                 true,
                 "Lax"
         );
-        Clock fixedClock = Clock.fixed(issuedAt, ZoneOffset.UTC);
-        AccessTokenProvider tokenProvider = new AccessTokenProvider(
+        final Clock fixedClock = Clock.fixed(issuedAt, ZoneOffset.UTC);
+        final AccessTokenProvider tokenProvider = new AccessTokenProvider(
                 new NimbusJwtEncoder(new ImmutableSecret<>(secretKey)),
                 properties,
                 fixedClock
         );
-        NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(secretKey)
+        final NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(secretKey)
                 .macAlgorithm(MacAlgorithm.HS256)
                 .build();
-        JwtTimestampValidator timestampValidator = new JwtTimestampValidator();
+        final JwtTimestampValidator timestampValidator = new JwtTimestampValidator();
         timestampValidator.setClock(fixedClock);
         jwtDecoder.setJwtValidator(timestampValidator);
 
         // When
-        Jwt jwt = jwtDecoder.decode(tokenProvider.create(1L));
+        final Jwt jwt = jwtDecoder.decode(tokenProvider.create(1L));
 
         // Then
         assertThat(jwt.getSubject()).isEqualTo("1");
         assertThat(jwt.getIssuer().toString()).isEqualTo("https://api.investlab.local");
         assertThat(jwt.getIssuedAt()).isEqualTo(issuedAt);
         assertThat(jwt.getExpiresAt()).isEqualTo(issuedAt.plus(Duration.ofMinutes(30)));
+        assertThat(tokenProvider.expiresInSeconds()).isEqualTo(1800L);
     }
 }

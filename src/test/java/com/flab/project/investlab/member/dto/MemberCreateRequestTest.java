@@ -9,7 +9,7 @@ class MemberCreateRequestTest {
     @Test
     void 회원가입_요청은_이메일과_닉네임의_공백을_제거한다() {
         // When
-        MemberCreateRequest request = new MemberCreateRequest(
+        final MemberCreateRequest request = new MemberCreateRequest(
                 " member@example.com ",
                 "password1234",
                 " investor "
