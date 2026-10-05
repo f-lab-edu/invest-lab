@@ -10,6 +10,11 @@ public enum AuthErrorCode implements ErrorCode {
             HttpStatus.UNAUTHORIZED,
             "이메일 또는 비밀번호가 올바르지 않습니다."
     ),
+    ACCESS_TOKEN_INVALID(
+            "AUTH_ACCESS_TOKEN_INVALID",
+            HttpStatus.UNAUTHORIZED,
+            "인증이 필요합니다."
+    ),
     REFRESH_TOKEN_INVALID(
             "AUTH_REFRESH_TOKEN_INVALID",
             HttpStatus.UNAUTHORIZED,
