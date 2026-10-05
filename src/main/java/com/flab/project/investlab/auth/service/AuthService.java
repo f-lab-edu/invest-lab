@@ -91,6 +91,18 @@ public class AuthService {
         );
     }
 
+    @Transactional
+    public void logout(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return;
+        }
+
+        String tokenHash = refreshTokenProvider.hash(refreshToken);
+        Optional<RefreshSession> refreshSession = refreshSessionRepository.findByTokenHash(tokenHash)
+                .or(() -> refreshSessionRepository.findByPreviousTokenHash(tokenHash));
+        refreshSession.ifPresent(refreshSessionRepository::delete);
+    }
+
     private RefreshSession handleInvalidRefreshToken(String tokenHash) {
         Optional<RefreshSession> reusedSession =
                 refreshSessionRepository.findByPreviousTokenHash(tokenHash);

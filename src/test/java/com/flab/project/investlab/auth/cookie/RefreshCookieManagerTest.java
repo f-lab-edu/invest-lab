@@ -34,4 +34,27 @@ class RefreshCookieManagerTest {
         assertThat(cookie.getPath()).isEqualTo("/api/v1/auth");
         assertThat(cookie.getMaxAge()).isEqualTo(Duration.ofDays(7));
     }
+
+    @Test
+    void 로그아웃_쿠키는_즉시_만료된다() {
+        // Given
+        AuthProperties properties = new AuthProperties(
+                "investlab-local-jwt-secret-key-32bytes",
+                "https://api.investlab.local",
+                Duration.ofMinutes(30),
+                Duration.ofDays(7),
+                true,
+                "Lax"
+        );
+        RefreshCookieManager cookieManager = new RefreshCookieManager(properties);
+
+        // When
+        ResponseCookie cookie = cookieManager.expire();
+
+        // Then
+        assertThat(cookie.getValue()).isEmpty();
+        assertThat(cookie.getMaxAge()).isZero();
+        assertThat(cookie.isHttpOnly()).isTrue();
+        assertThat(cookie.isSecure()).isTrue();
+    }
 }

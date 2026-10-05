@@ -24,4 +24,14 @@ public class RefreshCookieManager {
                 .maxAge(authProperties.refreshTokenTtl())
                 .build();
     }
+
+    public ResponseCookie expire() {
+        return ResponseCookie.from(COOKIE_NAME, "")
+                .httpOnly(true)
+                .secure(authProperties.refreshCookieSecure())
+                .sameSite(authProperties.refreshCookieSameSite())
+                .path("/api/v1/auth")
+                .maxAge(0)
+                .build();
+    }
 }

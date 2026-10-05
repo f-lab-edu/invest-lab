@@ -7,6 +7,7 @@ import com.flab.project.investlab.auth.service.AuthService;
 import com.flab.project.investlab.auth.service.LoginResult;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -59,5 +60,19 @@ public class AuthController {
                         refreshCookieManager.create(result.refreshToken()).toString()
                 )
                 .body(response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(
+            @CookieValue(name = RefreshCookieManager.COOKIE_NAME, required = false)
+            String refreshToken
+    ) {
+        authService.logout(refreshToken);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                .header(
+                        HttpHeaders.SET_COOKIE,
+                        refreshCookieManager.expire().toString()
+                )
+                .build();
     }
 }
