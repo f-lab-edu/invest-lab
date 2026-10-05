@@ -14,7 +14,7 @@ app:
   cors:
     allowed-origin: ${SPA_ORIGIN:http://localhost:3000}
   auth:
-    jwt-secret: ${JWT_SECRET:investlab-local-jwt-secret-key-32bytes}
+    jwt-secret: ${JWT_SECRET}
     jwt-issuer: ${JWT_ISSUER:https://api.investlab.local}
     access-token-ttl: 30m
     refresh-token-ttl: 7d
