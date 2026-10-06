@@ -75,7 +75,6 @@ class AuthServiceTest {
                 "current-refresh-token-hash",
                 expiresAt
         );
-        refreshSession.rotate("latest-refresh-token-hash", expiresAt);
         when(memberRepository.findByEmail("member@example.com")).thenReturn(Optional.of(member));
         when(passwordEncoder.matches("password1234", "encoded-password")).thenReturn(true);
         when(accessTokenProvider.create(1L)).thenReturn("access-token");
@@ -89,7 +88,6 @@ class AuthServiceTest {
 
         // Then
         assertThat(refreshSession.getTokenHash()).isEqualTo("new-refresh-token-hash");
-        assertThat(refreshSession.getPreviousTokenHash()).isNull();
         assertThat(refreshSession.getExpiresAt()).isEqualTo(expiresAt);
         verify(refreshSessionRepository).save(refreshSession);
     }

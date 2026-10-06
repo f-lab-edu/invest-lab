@@ -24,11 +24,6 @@ public enum AuthErrorCode implements ErrorCode {
             "AUTH_REFRESH_TOKEN_EXPIRED",
             HttpStatus.UNAUTHORIZED,
             "리프레시 토큰이 만료되었습니다."
-    ),
-    REFRESH_TOKEN_REUSED(
-            "AUTH_REFRESH_TOKEN_REUSED",
-            HttpStatus.UNAUTHORIZED,
-            "이미 사용된 리프레시 토큰입니다."
     );
 
     private final String code;

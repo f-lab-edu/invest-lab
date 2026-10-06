@@ -46,23 +46,6 @@ class AuthServiceLogoutTest {
     }
 
     @Test
-    void 직전_리프레시_토큰으로_로그아웃해도_현재_세션을_삭제한다() {
-        // Given
-        final RefreshSession refreshSession = mock(RefreshSession.class);
-        when(refreshTokenProvider.hash("previous-token")).thenReturn("previous-token-hash");
-        when(refreshSessionRepository.findByTokenHash("previous-token-hash"))
-                .thenReturn(Optional.empty());
-        when(refreshSessionRepository.findByPreviousTokenHash("previous-token-hash"))
-                .thenReturn(Optional.of(refreshSession));
-
-        // When
-        authService.logout("previous-token");
-
-        // Then
-        verify(refreshSessionRepository).delete(refreshSession);
-    }
-
-    @Test
     void 리프레시_토큰이_없는_로그아웃도_성공한다() {
         // When
         authService.logout(null);

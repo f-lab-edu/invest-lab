@@ -30,9 +30,6 @@ public class RefreshSession {
     @Column(name = "token_hash", nullable = false, unique = true, length = 64)
     private String tokenHash;
 
-    @Column(name = "previous_token_hash", length = 64)
-    private String previousTokenHash;
-
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 
@@ -51,14 +48,7 @@ public class RefreshSession {
         this.expiresAt = expiresAt;
     }
 
-    public void replaceForLogin(String tokenHash, Instant expiresAt) {
-        this.previousTokenHash = null;
-        this.tokenHash = tokenHash;
-        this.expiresAt = expiresAt;
-    }
-
-    public void rotate(String tokenHash, Instant expiresAt) {
-        this.previousTokenHash = this.tokenHash;
+    public void replace(String tokenHash, Instant expiresAt) {
         this.tokenHash = tokenHash;
         this.expiresAt = expiresAt;
     }
@@ -85,10 +75,6 @@ public class RefreshSession {
 
     public String getTokenHash() {
         return tokenHash;
-    }
-
-    public String getPreviousTokenHash() {
-        return previousTokenHash;
     }
 
     public Instant getExpiresAt() {

@@ -3,6 +3,7 @@ package com.flab.project.investlab.auth.controller;
 import com.flab.project.investlab.auth.cookie.RefreshCookieManager;
 import com.flab.project.investlab.auth.dto.LoginRequest;
 import com.flab.project.investlab.auth.dto.TokenResponse;
+import com.flab.project.investlab.auth.service.AccessTokenResult;
 import com.flab.project.investlab.auth.service.AuthService;
 import com.flab.project.investlab.auth.service.LoginResult;
 import jakarta.validation.Valid;
@@ -48,18 +49,12 @@ public class AuthController {
             @CookieValue(name = RefreshCookieManager.COOKIE_NAME, required = false)
             String refreshToken
     ) {
-        final LoginResult result = authService.refresh(refreshToken);
+        final AccessTokenResult result = authService.refresh(refreshToken);
         final TokenResponse response = TokenResponse.bearer(
                 result.accessToken(),
                 result.accessTokenExpiresIn()
         );
-
-        return ResponseEntity.ok()
-                .header(
-                        HttpHeaders.SET_COOKIE,
-                        refreshCookieManager.create(result.refreshToken()).toString()
-                )
-                .body(response);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/logout")
