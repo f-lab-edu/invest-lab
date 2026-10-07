@@ -38,7 +38,7 @@ class AuthServiceRefreshTest {
 
     @Test
     void 유효한_리프레시_토큰은_액세스_토큰만_재발급한다() {
-        // Given
+        // given
         final Member member = mock(Member.class);
         final Instant now = Instant.parse("2026-10-05T00:00:00Z");
         final Instant expiresAt = Instant.parse("2026-10-12T00:00:00Z");
@@ -55,10 +55,10 @@ class AuthServiceRefreshTest {
         when(accessTokenProvider.create(1L)).thenReturn("new-access-token");
         when(accessTokenProvider.expiresInSeconds()).thenReturn(1800L);
 
-        // When
+        // when
         final AccessTokenResult result = authService.refresh("refresh-token");
 
-        // Then
+        // then
         assertThat(result.accessToken()).isEqualTo("new-access-token");
         assertThat(result.accessTokenExpiresIn()).isEqualTo(1800L);
         assertThat(refreshSession.getTokenHash()).isEqualTo("refresh-token-hash");
@@ -68,7 +68,7 @@ class AuthServiceRefreshTest {
 
     @Test
     void 만료된_리프레시_토큰은_재발급을_거부한다() {
-        // Given
+        // given
         final Member member = new Member("member@example.com", "encoded-password", "investor");
         final Instant now = Instant.parse("2026-10-05T00:00:00Z");
         final RefreshSession refreshSession = new RefreshSession(member, "expired-token-hash", now);
@@ -77,7 +77,7 @@ class AuthServiceRefreshTest {
                 .thenReturn(Optional.of(refreshSession));
         when(refreshTokenProvider.now()).thenReturn(now);
 
-        // When & Then
+        // when & then
         assertThatThrownBy(() -> authService.refresh("expired-token"))
                 .isInstanceOf(AuthException.class)
                 .extracting(exception -> ((AuthException) exception).getErrorCode())
@@ -86,12 +86,12 @@ class AuthServiceRefreshTest {
 
     @Test
     void 알_수_없는_리프레시_토큰은_재발급을_거부한다() {
-        // Given
+        // given
         when(refreshTokenProvider.hash("unknown-token")).thenReturn("unknown-token-hash");
         when(refreshSessionRepository.findByTokenHash("unknown-token-hash"))
                 .thenReturn(Optional.empty());
 
-        // When & Then
+        // when & then
         assertThatThrownBy(() -> authService.refresh("unknown-token"))
                 .isInstanceOf(AuthException.class)
                 .extracting(exception -> ((AuthException) exception).getErrorCode())
@@ -100,7 +100,7 @@ class AuthServiceRefreshTest {
 
     @Test
     void 리프레시_토큰이_없으면_재발급을_거부한다() {
-        // When & Then
+        // when & then
         assertThatThrownBy(() -> authService.refresh(null))
                 .isInstanceOf(AuthException.class)
                 .extracting(exception -> ((AuthException) exception).getErrorCode())

@@ -38,7 +38,7 @@ class AuthServiceTest {
 
     @Test
     void 로그인하면_액세스_토큰과_리프레시_세션을_생성한다() {
-        // Given
+        // given
         final Member member = member(1L, "encoded-password");
         final Instant expiresAt = Instant.parse("2026-10-12T00:00:00Z");
         when(memberRepository.findByEmail("member@example.com")).thenReturn(Optional.of(member));
@@ -50,10 +50,10 @@ class AuthServiceTest {
         when(refreshTokenProvider.expiresAt()).thenReturn(expiresAt);
         when(refreshSessionRepository.findByMemberId(1L)).thenReturn(Optional.empty());
 
-        // When
+        // when
         final LoginResult result = authService.login("MEMBER@example.com", "password1234");
 
-        // Then
+        // then
         assertThat(result.accessToken()).isEqualTo("access-token");
         assertThat(result.refreshToken()).isEqualTo("refresh-token");
         assertThat(result.accessTokenExpiresIn()).isEqualTo(1800L);
@@ -67,7 +67,7 @@ class AuthServiceTest {
 
     @Test
     void 다시_로그인하면_기존_리프레시_세션을_교체한다() {
-        // Given
+        // given
         final Member member = member(1L, "encoded-password");
         final Instant expiresAt = Instant.parse("2026-10-12T00:00:00Z");
         final RefreshSession refreshSession = new RefreshSession(
@@ -83,10 +83,10 @@ class AuthServiceTest {
         when(refreshTokenProvider.expiresAt()).thenReturn(expiresAt);
         when(refreshSessionRepository.findByMemberId(1L)).thenReturn(Optional.of(refreshSession));
 
-        // When
+        // when
         authService.login("member@example.com", "password1234");
 
-        // Then
+        // then
         assertThat(refreshSession.getTokenHash()).isEqualTo("new-refresh-token-hash");
         assertThat(refreshSession.getExpiresAt()).isEqualTo(expiresAt);
         verify(refreshSessionRepository).save(refreshSession);
@@ -94,21 +94,21 @@ class AuthServiceTest {
 
     @Test
     void 존재하지_않는_이메일로_로그인하면_동일한_로그인_실패_예외가_발생한다() {
-        // Given
+        // given
         when(memberRepository.findByEmail("member@example.com")).thenReturn(Optional.empty());
 
-        // When & Then
+        // when & then
         assertLoginFailed(() -> authService.login("member@example.com", "password1234"));
     }
 
     @Test
     void 잘못된_비밀번호로_로그인하면_동일한_로그인_실패_예외가_발생한다() {
-        // Given
+        // given
         final Member member = member(1L, "encoded-password");
         when(memberRepository.findByEmail("member@example.com")).thenReturn(Optional.of(member));
         when(passwordEncoder.matches("wrong-password", "encoded-password")).thenReturn(false);
 
-        // When & Then
+        // when & then
         assertLoginFailed(() -> authService.login("member@example.com", "wrong-password"));
     }
 

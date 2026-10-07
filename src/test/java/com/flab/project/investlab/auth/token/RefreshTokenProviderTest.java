@@ -29,10 +29,10 @@ class RefreshTokenProviderTest {
 
     @Test
     void 리프레시_토큰은_SHA_256으로_해시한다() {
-        // When
+        // when
         final String hash = tokenProvider.hash("refresh-token");
 
-        // Then
+        // then
         assertThat(hash).isEqualTo(
                 "0eb17643d4e9261163783a420859c92c7d212fa9624106a12b510afbec266120"
         );
@@ -40,7 +40,7 @@ class RefreshTokenProviderTest {
 
     @Test
     void 리프레시_토큰_만료시간은_현재로부터_7일이다() {
-        // Then
+        // then
         assertThat(tokenProvider.expiresAt()).isEqualTo(NOW.plus(Duration.ofDays(7)));
     }
 }

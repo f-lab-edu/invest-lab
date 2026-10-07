@@ -11,14 +11,14 @@ class AuthPropertiesTest {
 
     @Test
     void JWT_비밀키가_32바이트보다_짧으면_생성을_거부한다() {
-        // When & Then
+        // when & then
         assertThatThrownBy(() -> properties("a".repeat(31)))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void JWT_비밀키가_32바이트이면_생성한다() {
-        // When & Then
+        // when & then
         assertThatCode(() -> properties("a".repeat(32)))
                 .doesNotThrowAnyException();
     }

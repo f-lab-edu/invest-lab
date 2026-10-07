@@ -28,10 +28,10 @@ class MemberServiceTest {
 
     @Test
     void 회원가입하면_이메일을_정규화하고_비밀번호를_암호화한다() {
-        // When
+        // when
         memberService.register("MEMBER@Example.COM", "password1234", "investor");
 
-        // Then
+        // then
         final ArgumentCaptor<Member> captor = ArgumentCaptor.forClass(Member.class);
         verify(memberRepository).save(captor.capture());
 
@@ -43,10 +43,10 @@ class MemberServiceTest {
 
     @Test
     void 중복된_이메일로_회원가입하면_예외가_발생한다() {
-        // Given
+        // given
         when(memberRepository.existsByEmail("member@example.com")).thenReturn(true);
 
-        // When & Then
+        // when & then
         assertThatThrownBy(() ->
                 memberService.register("member@example.com", "password1234", "investor")
         )
@@ -57,10 +57,10 @@ class MemberServiceTest {
 
     @Test
     void 중복된_닉네임으로_회원가입하면_예외가_발생한다() {
-        // Given
+        // given
         when(memberRepository.existsByNickname("investor")).thenReturn(true);
 
-        // When & Then
+        // when & then
         assertThatThrownBy(() ->
                 memberService.register("member@example.com", "password1234", "investor")
         )
@@ -71,10 +71,10 @@ class MemberServiceTest {
 
     @Test
     void 비밀번호가_72바이트를_초과하면_회원가입을_거부한다() {
-        // Given
+        // given
         final String password = "가".repeat(25);
 
-        // When & Then
+        // when & then
         assertThatThrownBy(() ->
                 memberService.register("member@example.com", password, "investor")
         )
@@ -85,23 +85,23 @@ class MemberServiceTest {
 
     @Test
     void 비밀번호가_72바이트이면_회원가입을_허용한다() {
-        // Given
+        // given
         final String password = "가".repeat(24);
 
-        // When
+        // when
         memberService.register("member@example.com", password, "investor");
 
-        // Then
+        // then
         verify(memberRepository).save(any(Member.class));
     }
 
     @Test
     void 저장소_무결성_예외는_회원_예외로_변환한다() {
-        // Given
+        // given
         final DataIntegrityViolationException cause = new DataIntegrityViolationException("duplicate");
         when(memberRepository.save(any(Member.class))).thenThrow(cause);
 
-        // When & Then
+        // when & then
         assertThatThrownBy(() ->
                 memberService.register("member@example.com", "password1234", "investor")
         )
@@ -113,23 +113,23 @@ class MemberServiceTest {
 
     @Test
     void 회원_ID로_현재_회원을_조회한다() {
-        // Given
+        // given
         final Member member = new Member("member@example.com", "encoded-password", "investor");
         when(memberRepository.findById(1L)).thenReturn(Optional.of(member));
 
-        // When
+        // when
         final Member foundMember = memberService.getById(1L);
 
-        // Then
+        // then
         assertThat(foundMember).isSameAs(member);
     }
 
     @Test
     void 존재하지_않는_회원_ID를_조회하면_예외가_발생한다() {
-        // Given
+        // given
         when(memberRepository.findById(1L)).thenReturn(Optional.empty());
 
-        // When & Then
+        // when & then
         assertThatThrownBy(() -> memberService.getById(1L))
                 .isInstanceOf(MemberException.class)
                 .satisfies(exception -> {

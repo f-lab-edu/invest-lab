@@ -13,24 +13,24 @@ class RefreshSessionTest {
 
     @Test
     void 다시_로그인하면_토큰과_만료시간을_교체한다() {
-        // Given
+        // given
         final RefreshSession refreshSession = session("old-token-hash");
         final Instant newExpiresAt = Instant.parse("2026-10-13T00:00:00Z");
 
-        // When
+        // when
         refreshSession.replace("new-token-hash", newExpiresAt);
 
-        // Then
+        // then
         assertThat(refreshSession.getTokenHash()).isEqualTo("new-token-hash");
         assertThat(refreshSession.getExpiresAt()).isEqualTo(newExpiresAt);
     }
 
     @Test
     void 만료시각과_현재시각이_같으면_만료된_세션이다() {
-        // Given
+        // given
         final RefreshSession refreshSession = session("token-hash");
 
-        // When & Then
+        // when & then
         assertThat(refreshSession.isExpired(Instant.parse("2026-10-12T00:00:00Z"))).isTrue();
         assertThat(refreshSession.isExpired(Instant.parse("2026-10-11T23:59:59Z"))).isFalse();
     }

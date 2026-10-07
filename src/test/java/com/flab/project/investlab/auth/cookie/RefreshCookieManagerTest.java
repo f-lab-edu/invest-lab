@@ -22,10 +22,10 @@ class RefreshCookieManagerTest {
 
     @Test
     void 리프레시_쿠키는_HTTP_ONLY와_보안_속성을_사용한다() {
-        // When
+        // when
         final ResponseCookie cookie = cookieManager.create("refresh-token");
 
-        // Then
+        // then
         assertThat(cookie.getName()).isEqualTo("refreshToken");
         assertThat(cookie.getValue()).isEqualTo("refresh-token");
         assertThat(cookie.isHttpOnly()).isTrue();
@@ -37,10 +37,10 @@ class RefreshCookieManagerTest {
 
     @Test
     void 로그아웃_쿠키는_즉시_만료된다() {
-        // When
+        // when
         final ResponseCookie cookie = cookieManager.expire();
 
-        // Then
+        // then
         assertThat(cookie.getName()).isEqualTo("refreshToken");
         assertThat(cookie.getValue()).isEmpty();
         assertThat(cookie.getMaxAge()).isZero();

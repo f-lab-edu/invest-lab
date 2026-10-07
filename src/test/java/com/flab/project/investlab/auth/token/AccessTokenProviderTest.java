@@ -23,7 +23,7 @@ class AccessTokenProviderTest {
 
     @Test
     void 액세스_토큰은_회원_ID와_30분_만료시간을_포함한다() {
-        // Given
+        // given
         final String secret = "investlab-local-jwt-secret-key-32bytes";
         final SecretKey secretKey = new SecretKeySpec(
                 secret.getBytes(StandardCharsets.UTF_8),
@@ -51,10 +51,10 @@ class AccessTokenProviderTest {
         timestampValidator.setClock(fixedClock);
         jwtDecoder.setJwtValidator(timestampValidator);
 
-        // When
+        // when
         final Jwt jwt = jwtDecoder.decode(tokenProvider.create(1L));
 
-        // Then
+        // then
         assertThat(jwt.getSubject()).isEqualTo("1");
         assertThat(jwt.getIssuer().toString()).isEqualTo("https://api.investlab.local");
         assertThat(jwt.getIssuedAt()).isEqualTo(issuedAt);
