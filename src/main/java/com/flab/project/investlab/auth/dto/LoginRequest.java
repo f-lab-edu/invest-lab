@@ -5,11 +5,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record LoginRequest(
-        @NotBlank @Email @Size(max = 255) String email,
+        @NotBlank
+        @Email(regexp = "^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(?:\\.[A-Za-z0-9-]+)+$")
+        @Size(max = 255)
+        String email,
         @NotBlank String password
 ) {
-
-    public LoginRequest {
-        email = email == null ? null : email.trim();
-    }
 }
