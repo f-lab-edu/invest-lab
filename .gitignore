@@ -42,3 +42,4 @@ out/
 .claude/
 AGENTS.md
 CLAUDE.md
+/src/main/resources/docs/
