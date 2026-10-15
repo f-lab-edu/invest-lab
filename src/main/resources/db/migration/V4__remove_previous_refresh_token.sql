@@ -1,4 +1,5 @@
-drop index if exists idx_refresh_sessions_previous_token_hash;
+drop index idx_refresh_sessions_previous_token_hash
+    on refresh_sessions;
 
 alter table refresh_sessions
-    drop column if exists previous_token_hash;
+    drop column previous_token_hash;
