@@ -43,3 +43,6 @@ out/
 AGENTS.md
 CLAUDE.md
 /src/main/resources/docs/
+
+### Local seed data ###
+/src/main/resources/db/seed/
