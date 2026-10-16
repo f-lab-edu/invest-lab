@@ -32,6 +32,10 @@ public class PolicyVersion {
     @JoinColumn(name = "policy_id", nullable = false)
     private Policy policy;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_version_id")
+    private PolicyVersion parentVersion;
+
     @Column(name = "version_no", nullable = false)
     private int versionNo;
 
@@ -88,6 +92,10 @@ public class PolicyVersion {
 
     public Policy getPolicy() {
         return policy;
+    }
+
+    public PolicyVersion getParentVersion() {
+        return parentVersion;
     }
 
     public int getVersionNo() {
