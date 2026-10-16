@@ -5,6 +5,11 @@ import org.springframework.http.HttpStatus;
 
 public enum PolicyErrorCode implements ErrorCode {
 
+    POLICY_NOT_FOUND(
+            "POLICY_NOT_FOUND",
+            HttpStatus.NOT_FOUND,
+            "규칙을 찾을 수 없습니다."
+    ),
     PRESET_NOT_FOUND(
             "POLICY_PRESET_NOT_FOUND",
             HttpStatus.NOT_FOUND,

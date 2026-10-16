@@ -4,16 +4,19 @@ import com.flab.project.investlab.instrument.domain.Instrument;
 import com.flab.project.investlab.instrument.repository.InstrumentRepository;
 import com.flab.project.investlab.member.domain.Member;
 import com.flab.project.investlab.member.repository.MemberRepository;
+import com.flab.project.investlab.policy.domain.AllocationDraft;
 import com.flab.project.investlab.policy.domain.Policy;
 import com.flab.project.investlab.policy.domain.PolicyAllocation;
 import com.flab.project.investlab.policy.domain.PolicyVersion;
 import com.flab.project.investlab.policy.dto.PolicyCreateRequest;
+import com.flab.project.investlab.policy.dto.PolicyDetailResponse;
 import com.flab.project.investlab.policy.exception.PolicyErrorCode;
 import com.flab.project.investlab.policy.exception.PolicyException;
 import com.flab.project.investlab.policy.repository.PolicyRepository;
 import com.flab.project.investlab.policy.repository.PolicyVersionRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -128,6 +131,47 @@ class PolicyServiceTest {
                 .isEqualTo(PolicyErrorCode.INSTRUMENT_NOT_FOUND.getCode());
         verify(policyRepository, never()).save(any());
         verify(policyVersionRepository, never()).save(any());
+    }
+
+    @Test
+    void 내_규칙을_조회하면_최신_버전을_응답으로_반환한다() {
+        // given
+        final Policy policy = new Policy(member, "내 규칙");
+        final PolicyVersion version = PolicyVersion.create(policy, null, 2, 3, 300, false, 1000, List.of(
+                new AllocationDraft("미국주식", stockEtf, 9000)
+        ));
+        when(policyVersionRepository.findLatestMemberVersion(3L, 10L)).thenReturn(Optional.of(version));
+
+        // when
+        final PolicyDetailResponse response = policyService.getMyPolicy(10L, 3L);
+
+        // then
+        assertThat(response.name()).isEqualTo("내 규칙");
+        assertThat(response.versionNo()).isEqualTo(2);
+        assertThat(response.reviewIntervalMonths()).isEqualTo(3);
+        assertThat(response.thresholdBps()).isEqualTo(300);
+        assertThat(response.allowSell()).isFalse();
+        assertThat(response.cashTargetBps()).isEqualTo(1000);
+        assertThat(response.allocations())
+                .extracting(PolicyDetailResponse.Allocation::assetClass,
+                        PolicyDetailResponse.Allocation::instrumentId,
+                        PolicyDetailResponse.Allocation::targetBps)
+                .containsExactly(tuple("미국주식", 2L, 9000));
+    }
+
+    @Test
+    void 내_규칙으로_조회되지_않으면_예외가_발생한다() {
+        // given
+        when(policyVersionRepository.findLatestMemberVersion(3L, 10L)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> policyService.getMyPolicy(10L, 3L))
+                .isInstanceOf(PolicyException.class)
+                .satisfies(exception -> {
+                    final PolicyException policyException = (PolicyException) exception;
+                    assertThat(policyException.getErrorCode()).isEqualTo(PolicyErrorCode.POLICY_NOT_FOUND.getCode());
+                    assertThat(policyException.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                });
     }
 
     private PolicyCreateRequest request(final Long sourceVersionId, final List<PolicyCreateRequest.Allocation> allocations) {
