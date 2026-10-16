@@ -9,6 +9,7 @@ import com.flab.project.investlab.policy.domain.Policy;
 import com.flab.project.investlab.policy.domain.PolicyVersion;
 import com.flab.project.investlab.policy.dto.PolicyCreateRequest;
 import com.flab.project.investlab.policy.dto.PolicyCreateResponse;
+import com.flab.project.investlab.policy.dto.PolicySummaryResponse;
 import com.flab.project.investlab.policy.exception.PolicyErrorCode;
 import com.flab.project.investlab.policy.exception.PolicyException;
 import com.flab.project.investlab.policy.repository.PolicyRepository;
@@ -65,6 +66,11 @@ public class PolicyService {
         policyRepository.save(policy);
         policyVersionRepository.save(version);
         return new PolicyCreateResponse(policy.getId(), version.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public List<PolicySummaryResponse> getMyPolicies(final Long memberId) {
+        return policyRepository.findSummariesByMemberId(memberId);
     }
 
     private PolicyVersion findSourceVersion(final Long sourceVersionId) {
