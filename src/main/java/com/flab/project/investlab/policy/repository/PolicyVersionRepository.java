@@ -19,4 +19,6 @@ public interface PolicyVersionRepository extends JpaRepository<PolicyVersion, Lo
               and v.versionNo = (select max(v2.versionNo) from PolicyVersion v2 where v2.policy = p)
             """)
     Optional<PolicyVersion> findLatestPresetVersion(@Param("policyId") Long policyId);
+
+    Optional<PolicyVersion> findByIdAndPolicyMemberIsNull(Long id);
 }
