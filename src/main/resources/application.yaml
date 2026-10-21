@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/investlab}
+    url: ${DB_URL:jdbc:mysql://localhost:3306/investlab}
     username: ${DB_USERNAME:investlab}
     password: ${DB_PASSWORD:investlab}
   jpa:
