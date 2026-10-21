@@ -1,6 +1,7 @@
 package com.flab.project.investlab.policy.domain;
 
 import com.flab.project.investlab.instrument.domain.Instrument;
+import com.flab.project.investlab.instrument.domain.Market;
 import com.flab.project.investlab.policy.exception.PolicyErrorCode;
 import com.flab.project.investlab.policy.exception.PolicyException;
 import org.junit.jupiter.api.Test;
@@ -16,8 +17,8 @@ import static org.assertj.core.api.Assertions.tuple;
 class PolicyVersionTest {
 
     private final Policy policy = new Policy(null, "내 규칙");
-    private final Instrument stockEtf = new Instrument("KRX", "360750", "TIGER 미국S&P500");
-    private final Instrument bondEtf = new Instrument("KRX", "114260", "KODEX 국고채3년");
+    private final Instrument stockEtf = new Instrument(Market.KRX, "360750", "TIGER 미국S&P500");
+    private final Instrument bondEtf = new Instrument(Market.KRX, "114260", "KODEX 국고채3년");
 
     @Test
     void 배분과_현금_합계가_10000이면_버전을_생성한다() {

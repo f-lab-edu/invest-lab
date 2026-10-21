@@ -1,6 +1,7 @@
 package com.flab.project.investlab.policy.service;
 
 import com.flab.project.investlab.instrument.domain.Instrument;
+import com.flab.project.investlab.instrument.domain.Market;
 import com.flab.project.investlab.instrument.repository.InstrumentRepository;
 import com.flab.project.investlab.member.domain.Member;
 import com.flab.project.investlab.member.repository.MemberRepository;
@@ -179,7 +180,7 @@ class PolicyServiceTest {
     }
 
     private Instrument instrument(final Long id, final String symbol, final String name) {
-        final Instrument instrument = new Instrument("KRX", symbol, name);
+        final Instrument instrument = new Instrument(Market.KRX, symbol, name);
         ReflectionTestUtils.setField(instrument, "id", id);
         return instrument;
     }

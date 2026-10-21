@@ -1,12 +1,10 @@
 package com.flab.project.investlab.instrument.controller;
 
-import com.flab.project.investlab.instrument.dto.InstrumentResponse;
+import com.flab.project.investlab.instrument.dto.InstrumentListResponse;
 import com.flab.project.investlab.instrument.service.InstrumentService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/instruments")
@@ -19,9 +17,7 @@ public class InstrumentController {
     }
 
     @GetMapping
-    public List<InstrumentResponse> getAll() {
-        return instrumentService.getAll().stream()
-                .map(InstrumentResponse::from)
-                .toList();
+    public InstrumentListResponse getAll() {
+        return instrumentService.getAll();
     }
 }
