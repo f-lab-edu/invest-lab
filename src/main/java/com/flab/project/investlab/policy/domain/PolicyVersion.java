@@ -14,12 +14,15 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@Getter
 @Entity
 @Table(name = "policy_versions")
 public class PolicyVersion {
@@ -50,6 +53,7 @@ public class PolicyVersion {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
+    @Getter(AccessLevel.NONE)
     @OneToMany(mappedBy = "policyVersion", cascade = CascadeType.PERSIST)
     @OrderBy("id ASC")
     private List<PolicyAllocation> allocations = new ArrayList<>();
@@ -80,38 +84,6 @@ public class PolicyVersion {
     @PrePersist
     void onCreate() {
         createdAt = Instant.now();
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public Policy getPolicy() {
-        return policy;
-    }
-
-    public int getVersionNo() {
-        return versionNo;
-    }
-
-    public int getReviewIntervalMonths() {
-        return reviewIntervalMonths;
-    }
-
-    public int getThresholdBps() {
-        return thresholdBps;
-    }
-
-    public boolean isAllowSell() {
-        return allowSell;
-    }
-
-    public int getCashTargetBps() {
-        return cashTargetBps;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
     }
 
     public List<PolicyAllocation> getAllocations() {

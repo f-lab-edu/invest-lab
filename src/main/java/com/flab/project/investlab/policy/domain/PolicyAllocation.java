@@ -10,7 +10,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.Getter;
 
+@Getter
 @Entity
 @Table(name = "policy_allocations")
 public class PolicyAllocation {
@@ -46,25 +48,5 @@ public class PolicyAllocation {
         this.assetClass = assetClass;
         this.instrument = instrument;
         this.targetBps = targetBps;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public PolicyVersion getPolicyVersion() {
-        return policyVersion;
-    }
-
-    public String getAssetClass() {
-        return assetClass;
-    }
-
-    public Instrument getInstrument() {
-        return instrument;
-    }
-
-    public int getTargetBps() {
-        return targetBps;
     }
 }
