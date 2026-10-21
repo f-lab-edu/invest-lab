@@ -15,6 +15,7 @@ import com.flab.project.investlab.policy.exception.PolicyErrorCode;
 import com.flab.project.investlab.policy.exception.PolicyException;
 import com.flab.project.investlab.policy.repository.PolicyRepository;
 import com.flab.project.investlab.policy.repository.PolicyVersionRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class PolicyService {
 
     private static final int FIRST_VERSION_NO = 1;
@@ -34,18 +36,6 @@ public class PolicyService {
     private final PolicyVersionRepository policyVersionRepository;
     private final InstrumentRepository instrumentRepository;
     private final MemberRepository memberRepository;
-
-    public PolicyService(
-            final PolicyRepository policyRepository,
-            final PolicyVersionRepository policyVersionRepository,
-            final InstrumentRepository instrumentRepository,
-            final MemberRepository memberRepository
-    ) {
-        this.policyRepository = policyRepository;
-        this.policyVersionRepository = policyVersionRepository;
-        this.instrumentRepository = instrumentRepository;
-        this.memberRepository = memberRepository;
-    }
 
     @Transactional
     public PolicyCreateResponse create(final Jwt jwt, final PolicyCreateRequest request) {

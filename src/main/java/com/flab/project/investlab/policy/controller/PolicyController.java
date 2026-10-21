@@ -6,6 +6,7 @@ import com.flab.project.investlab.policy.dto.PolicyDetailResponse;
 import com.flab.project.investlab.policy.dto.PolicySummaryResponse;
 import com.flab.project.investlab.policy.service.PolicyService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -20,14 +21,11 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/policies")
 public class PolicyController {
 
     private final PolicyService policyService;
-
-    public PolicyController(final PolicyService policyService) {
-        this.policyService = policyService;
-    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
