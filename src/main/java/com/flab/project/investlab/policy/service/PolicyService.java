@@ -15,6 +15,7 @@ import com.flab.project.investlab.policy.exception.PolicyErrorCode;
 import com.flab.project.investlab.policy.exception.PolicyException;
 import com.flab.project.investlab.policy.repository.PolicyRepository;
 import com.flab.project.investlab.policy.repository.PolicyVersionRepository;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,11 +48,11 @@ public class PolicyService {
     }
 
     @Transactional
-    public PolicyCreateResponse create(final Long memberId, final PolicyCreateRequest request) {
+    public PolicyCreateResponse create(final Jwt jwt, final PolicyCreateRequest request) {
         final PolicyVersion sourceVersion = findSourceVersion(request.sourceVersionId());
         final List<AllocationDraft> drafts = toDrafts(request.allocations());
 
-        final Member member = memberRepository.getReferenceById(memberId);
+        final Member member = memberRepository.getReferenceById(memberIdOf(jwt));
         final Policy policy = new Policy(member, request.name());
         final PolicyVersion version = PolicyVersion.create(
                 policy,
@@ -70,15 +71,19 @@ public class PolicyService {
     }
 
     @Transactional(readOnly = true)
-    public List<PolicySummaryResponse> getMyPolicies(final Long memberId) {
-        return policyRepository.findSummariesByMemberId(memberId);
+    public List<PolicySummaryResponse> getMyPolicies(final Jwt jwt) {
+        return policyRepository.findSummariesByMemberId(memberIdOf(jwt));
     }
 
     @Transactional(readOnly = true)
-    public PolicyDetailResponse getMyPolicy(final Long memberId, final Long policyId) {
-        final PolicyVersion version = policyVersionRepository.findLatestMemberVersion(policyId, memberId)
+    public PolicyDetailResponse getMyPolicy(final Jwt jwt, final Long policyId) {
+        final PolicyVersion version = policyVersionRepository.findLatestMemberVersion(policyId, memberIdOf(jwt))
                 .orElseThrow(() -> new PolicyException(PolicyErrorCode.POLICY_NOT_FOUND));
         return PolicyDetailResponse.from(version);
+    }
+
+    private Long memberIdOf(final Jwt jwt) {
+        return Long.valueOf(jwt.getSubject());
     }
 
     private PolicyVersion findSourceVersion(final Long sourceVersionId) {

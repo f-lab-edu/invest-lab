@@ -18,6 +18,7 @@ import com.flab.project.investlab.policy.repository.PolicyVersionRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -46,6 +47,10 @@ class PolicyServiceTest {
             memberRepository
     );
 
+    private final Jwt jwt = Jwt.withTokenValue("token")
+            .header("alg", "HS256")
+            .subject("10")
+            .build();
     private final Member member = new Member("member@example.com", "encoded-password", "investor");
     private final Instrument stockEtf = instrument(2L, "360750", "TIGER 미국S&P500");
     private final Instrument bondEtf = instrument(4L, "114260", "KODEX 국고채3년");
@@ -59,7 +64,7 @@ class PolicyServiceTest {
         when(memberRepository.getReferenceById(10L)).thenReturn(member);
 
         // when
-        policyService.create(10L, request(1L, List.of(
+        policyService.create(jwt, request(1L, List.of(
                 new PolicyCreateRequest.Allocation("미국주식", 2L, 6000),
                 new PolicyCreateRequest.Allocation("국내채권", 4L, 4000)
         )));
@@ -91,7 +96,7 @@ class PolicyServiceTest {
         when(memberRepository.getReferenceById(10L)).thenReturn(member);
 
         // when
-        policyService.create(10L, request(null, List.of(
+        policyService.create(jwt, request(null, List.of(
                 new PolicyCreateRequest.Allocation("미국주식", 2L, 10_000)
         )));
 
@@ -107,7 +112,7 @@ class PolicyServiceTest {
         when(policyVersionRepository.findByIdAndPolicyMemberIsNull(99L)).thenReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> policyService.create(10L, request(99L, List.of(
+        assertThatThrownBy(() -> policyService.create(jwt, request(99L, List.of(
                 new PolicyCreateRequest.Allocation("미국주식", 2L, 10_000)
         ))))
                 .isInstanceOf(PolicyException.class)
@@ -123,7 +128,7 @@ class PolicyServiceTest {
         when(instrumentRepository.findAllById(Set.of(2L, 999L))).thenReturn(List.of(stockEtf));
 
         // when & then
-        assertThatThrownBy(() -> policyService.create(10L, request(null, List.of(
+        assertThatThrownBy(() -> policyService.create(jwt, request(null, List.of(
                 new PolicyCreateRequest.Allocation("미국주식", 2L, 6000),
                 new PolicyCreateRequest.Allocation("국내채권", 999L, 4000)
         ))))
@@ -144,7 +149,7 @@ class PolicyServiceTest {
         when(policyVersionRepository.findLatestMemberVersion(3L, 10L)).thenReturn(Optional.of(version));
 
         // when
-        final PolicyDetailResponse response = policyService.getMyPolicy(10L, 3L);
+        final PolicyDetailResponse response = policyService.getMyPolicy(jwt, 3L);
 
         // then
         assertThat(response.name()).isEqualTo("내 규칙");
@@ -166,7 +171,7 @@ class PolicyServiceTest {
         when(policyVersionRepository.findLatestMemberVersion(3L, 10L)).thenReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> policyService.getMyPolicy(10L, 3L))
+        assertThatThrownBy(() -> policyService.getMyPolicy(jwt, 3L))
                 .isInstanceOf(PolicyException.class)
                 .satisfies(exception -> {
                     final PolicyException policyException = (PolicyException) exception;

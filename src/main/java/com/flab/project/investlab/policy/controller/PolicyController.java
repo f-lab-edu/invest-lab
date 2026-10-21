@@ -35,12 +35,12 @@ public class PolicyController {
             @AuthenticationPrincipal final Jwt jwt,
             @Valid @RequestBody final PolicyCreateRequest request
     ) {
-        return policyService.create(Long.valueOf(jwt.getSubject()), request);
+        return policyService.create(jwt, request);
     }
 
     @GetMapping
     public List<PolicySummaryResponse> getMyPolicies(@AuthenticationPrincipal final Jwt jwt) {
-        return policyService.getMyPolicies(Long.valueOf(jwt.getSubject()));
+        return policyService.getMyPolicies(jwt);
     }
 
     @GetMapping("/{policyId}")
@@ -48,6 +48,6 @@ public class PolicyController {
             @AuthenticationPrincipal final Jwt jwt,
             @PathVariable final Long policyId
     ) {
-        return policyService.getMyPolicy(Long.valueOf(jwt.getSubject()), policyId);
+        return policyService.getMyPolicy(jwt, policyId);
     }
 }
