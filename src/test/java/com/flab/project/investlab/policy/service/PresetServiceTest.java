@@ -2,6 +2,7 @@ package com.flab.project.investlab.policy.service;
 
 import com.flab.project.investlab.instrument.domain.Instrument;
 import com.flab.project.investlab.instrument.domain.Market;
+import com.flab.project.investlab.policy.domain.AllocationDraft;
 import com.flab.project.investlab.policy.domain.Policy;
 import com.flab.project.investlab.policy.domain.PolicyVersion;
 import com.flab.project.investlab.policy.dto.PresetDetailResponse;
@@ -51,9 +52,10 @@ class PresetServiceTest {
     void 프리셋_ID로_조회하면_최신_버전을_응답으로_반환한다() {
         // given
         final Policy preset = new Policy(null, "주식 60 · 채권 40");
-        final PolicyVersion version = new PolicyVersion(preset, 1, 1, 500, true, 0);
-        version.addAllocation("미국주식", new Instrument(Market.KRX, "360750", "TIGER 미국S&P500"), 6000);
-        version.addAllocation("국내채권", new Instrument(Market.KRX, "114260", "KODEX 국고채3년"), 4000);
+        final PolicyVersion version = PolicyVersion.create(preset, null, 1, 1, 500, true, 0, List.of(
+                new AllocationDraft("미국주식", new Instrument(Market.KRX, "360750", "TIGER 미국S&P500"), 6000),
+                new AllocationDraft("국내채권", new Instrument(Market.KRX, "114260", "KODEX 국고채3년"), 4000)
+        ));
         when(policyVersionRepository.findLatestPresetVersion(1L)).thenReturn(Optional.of(version));
 
         // when

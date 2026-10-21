@@ -4,6 +4,7 @@ import com.flab.project.investlab.TestcontainersConfiguration;
 import com.flab.project.investlab.instrument.domain.Instrument;
 import com.flab.project.investlab.instrument.repository.InstrumentRepository;
 import com.flab.project.investlab.member.domain.Member;
+import com.flab.project.investlab.policy.domain.AllocationDraft;
 import com.flab.project.investlab.policy.domain.Policy;
 import com.flab.project.investlab.policy.domain.PolicyAllocation;
 import com.flab.project.investlab.policy.domain.PolicyVersion;
@@ -15,6 +16,7 @@ import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabas
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.context.annotation.Import;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -99,8 +101,9 @@ class PolicyVersionRepositoryTest {
 
     private PolicyVersion persistVersion(final Policy policy, final int versionNo) {
         final Instrument instrument = instrumentRepository.findAllByOrderByNameAsc().get(0);
-        final PolicyVersion version = new PolicyVersion(policy, versionNo, 1, 500, true, 0);
-        version.addAllocation("국내주식", instrument, 10_000);
+        final PolicyVersion version = PolicyVersion.create(policy, null, versionNo, 1, 500, true, 0, List.of(
+                new AllocationDraft("국내주식", instrument, 10_000)
+        ));
         return entityManager.persist(version);
     }
 }
