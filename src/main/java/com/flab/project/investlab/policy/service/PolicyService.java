@@ -9,10 +9,14 @@ import com.flab.project.investlab.policy.domain.Policy;
 import com.flab.project.investlab.policy.domain.PolicyVersion;
 import com.flab.project.investlab.policy.dto.PolicyCreateRequest;
 import com.flab.project.investlab.policy.dto.PolicyCreateResponse;
+import com.flab.project.investlab.policy.dto.PolicyDetailResponse;
+import com.flab.project.investlab.policy.dto.PolicyListResponse;
 import com.flab.project.investlab.policy.exception.PolicyErrorCode;
 import com.flab.project.investlab.policy.exception.PolicyException;
 import com.flab.project.investlab.policy.repository.PolicyRepository;
 import com.flab.project.investlab.policy.repository.PolicyVersionRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +27,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class PolicyService {
 
     private static final int FIRST_VERSION_NO = 1;
@@ -32,24 +37,12 @@ public class PolicyService {
     private final InstrumentRepository instrumentRepository;
     private final MemberRepository memberRepository;
 
-    public PolicyService(
-            final PolicyRepository policyRepository,
-            final PolicyVersionRepository policyVersionRepository,
-            final InstrumentRepository instrumentRepository,
-            final MemberRepository memberRepository
-    ) {
-        this.policyRepository = policyRepository;
-        this.policyVersionRepository = policyVersionRepository;
-        this.instrumentRepository = instrumentRepository;
-        this.memberRepository = memberRepository;
-    }
-
     @Transactional
-    public PolicyCreateResponse create(final Long memberId, final PolicyCreateRequest request) {
+    public PolicyCreateResponse create(final Jwt jwt, final PolicyCreateRequest request) {
         final PolicyVersion sourceVersion = findSourceVersion(request.sourceVersionId());
         final List<AllocationDraft> drafts = toDrafts(request.allocations());
 
-        final Member member = memberRepository.getReferenceById(memberId);
+        final Member member = memberRepository.getReferenceById(memberIdOf(jwt));
         final Policy policy = new Policy(member, request.name());
         final PolicyVersion version = PolicyVersion.create(
                 policy,
@@ -65,6 +58,30 @@ public class PolicyService {
         policyRepository.save(policy);
         policyVersionRepository.save(version);
         return new PolicyCreateResponse(policy.getId(), version.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public PolicyListResponse getMyPolicies(final Jwt jwt) {
+        final List<PolicyListResponse.Item> items = policyRepository.findAllByMemberIdOrderByIdDesc(memberIdOf(jwt)).stream()
+                .map(policy -> new PolicyListResponse.Item(
+                        policy.getId(),
+                        policy.getName(),
+                        policy.getLatestVersionNo(),
+                        policy.getCreatedAt()
+                ))
+                .toList();
+        return new PolicyListResponse(items);
+    }
+
+    @Transactional(readOnly = true)
+    public PolicyDetailResponse getMyPolicy(final Jwt jwt, final Long policyId) {
+        final PolicyVersion version = policyVersionRepository.findLatestMemberVersion(policyId, memberIdOf(jwt))
+                .orElseThrow(() -> new PolicyException(PolicyErrorCode.POLICY_NOT_FOUND));
+        return PolicyDetailResponse.from(version);
+    }
+
+    private Long memberIdOf(final Jwt jwt) {
+        return Long.valueOf(jwt.getSubject());
     }
 
     private PolicyVersion findSourceVersion(final Long sourceVersionId) {

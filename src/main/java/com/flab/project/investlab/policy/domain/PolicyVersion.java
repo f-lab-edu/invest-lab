@@ -115,6 +115,7 @@ public class PolicyVersion {
         for (final AllocationDraft draft : drafts) {
             version.addAllocation(draft.assetClass().strip(), draft.instrument(), draft.targetBps());
         }
+        policy.updateLatestVersionNo(versionNo);
         return version;
     }
 

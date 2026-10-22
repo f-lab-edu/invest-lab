@@ -8,4 +8,6 @@ import java.util.List;
 public interface PolicyRepository extends JpaRepository<Policy, Long> {
 
     List<Policy> findAllByMemberIsNullOrderByIdAsc();
+
+    List<Policy> findAllByMemberIdOrderByIdDesc(Long memberId);
 }

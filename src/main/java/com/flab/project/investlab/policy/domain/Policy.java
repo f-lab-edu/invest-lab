@@ -32,6 +32,9 @@ public class Policy {
     @Column(nullable = false, length = 50)
     private String name;
 
+    @Column(name = "latest_version_no", nullable = false)
+    private int latestVersionNo;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -44,6 +47,10 @@ public class Policy {
     public Policy(final Member member, final String name) {
         this.member = member;
         this.name = name;
+    }
+
+    void updateLatestVersionNo(final int versionNo) {
+        this.latestVersionNo = versionNo;
     }
 
     @PrePersist
