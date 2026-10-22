@@ -62,7 +62,14 @@ public class PolicyService {
 
     @Transactional(readOnly = true)
     public List<PolicySummaryResponse> getMyPolicies(final Jwt jwt) {
-        return policyRepository.findSummariesByMemberId(memberIdOf(jwt));
+        return policyRepository.findAllByMemberIdOrderByIdDesc(memberIdOf(jwt)).stream()
+                .map(policy -> new PolicySummaryResponse(
+                        policy.getId(),
+                        policy.getName(),
+                        policy.getLatestVersionNo(),
+                        policy.getCreatedAt()
+                ))
+                .toList();
     }
 
     @Transactional(readOnly = true)

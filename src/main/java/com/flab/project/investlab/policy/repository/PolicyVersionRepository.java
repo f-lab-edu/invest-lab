@@ -16,7 +16,7 @@ public interface PolicyVersionRepository extends JpaRepository<PolicyVersion, Lo
             left join fetch a.instrument
             where p.id = :policyId
               and p.member is null
-              and v.versionNo = (select max(v2.versionNo) from PolicyVersion v2 where v2.policy = p)
+              and v.versionNo = p.latestVersionNo
             """)
     Optional<PolicyVersion> findLatestPresetVersion(@Param("policyId") Long policyId);
 
@@ -29,7 +29,7 @@ public interface PolicyVersionRepository extends JpaRepository<PolicyVersion, Lo
             left join fetch a.instrument
             where p.id = :policyId
               and p.member.id = :memberId
-              and v.versionNo = (select max(v2.versionNo) from PolicyVersion v2 where v2.policy = p)
+              and v.versionNo = p.latestVersionNo
             """)
     Optional<PolicyVersion> findLatestMemberVersion(@Param("policyId") Long policyId, @Param("memberId") Long memberId);
 }

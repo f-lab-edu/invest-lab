@@ -99,6 +99,45 @@ class PolicyVersionRepositoryTest {
         assertThat(found).isEmpty();
     }
 
+    @Test
+    void 내_규칙을_조회하면_최신_버전을_배분과_함께_가져온다() {
+        // given
+        final Member member = entityManager.persist(new Member("member@example.com", "encoded-password", "investor"));
+        final Policy policy = entityManager.persist(new Policy(member, "내 규칙"));
+        persistVersion(policy, 1);
+        final PolicyVersion latest = persistVersion(policy, 2);
+        entityManager.flush();
+        entityManager.clear();
+
+        // when
+        final PolicyVersion found = policyVersionRepository.findLatestMemberVersion(policy.getId(), member.getId())
+                .orElseThrow();
+
+        // then
+        assertThat(found.getId()).isEqualTo(latest.getId());
+        final PersistenceUnitUtil persistenceUnitUtil = entityManager.getEntityManager()
+                .getEntityManagerFactory()
+                .getPersistenceUnitUtil();
+        assertThat(persistenceUnitUtil.isLoaded(found, "allocations")).isTrue();
+    }
+
+    @Test
+    void 다른_회원의_규칙은_내_규칙으로_조회하지_않는다() {
+        // given
+        final Member owner = entityManager.persist(new Member("owner@example.com", "encoded-password", "owner"));
+        final Member other = entityManager.persist(new Member("other@example.com", "encoded-password", "other"));
+        final Policy policy = entityManager.persist(new Policy(owner, "주인 규칙"));
+        persistVersion(policy, 1);
+        entityManager.flush();
+        entityManager.clear();
+
+        // when
+        final Optional<PolicyVersion> found = policyVersionRepository.findLatestMemberVersion(policy.getId(), other.getId());
+
+        // then
+        assertThat(found).isEmpty();
+    }
+
     private PolicyVersion persistVersion(final Policy policy, final int versionNo) {
         final Instrument instrument = instrumentRepository.findAllByOrderByNameAsc().get(0);
         final PolicyVersion version = PolicyVersion.create(policy, null, versionNo, 1, 500, true, 0, List.of(

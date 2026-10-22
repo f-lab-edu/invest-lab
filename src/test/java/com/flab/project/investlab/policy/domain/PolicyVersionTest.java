@@ -48,6 +48,18 @@ class PolicyVersionTest {
     }
 
     @Test
+    void 버전을_생성하면_규칙의_최신_버전_번호가_바뀐다() {
+        // given
+        PolicyVersion.create(policy, null, 1, 1, 500, true, 10_000, List.of());
+
+        // when
+        PolicyVersion.create(policy, null, 2, 1, 500, true, 10_000, List.of());
+
+        // then
+        assertThat(policy.getLatestVersionNo()).isEqualTo(2);
+    }
+
+    @Test
     void 현금을_포함해_합계가_10000이면_버전을_생성한다() {
         // when
         final PolicyVersion version = PolicyVersion.create(policy, null, 1, 1, 500, true, 1000, List.of(
