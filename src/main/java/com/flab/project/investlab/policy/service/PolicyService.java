@@ -10,7 +10,7 @@ import com.flab.project.investlab.policy.domain.PolicyVersion;
 import com.flab.project.investlab.policy.dto.PolicyCreateRequest;
 import com.flab.project.investlab.policy.dto.PolicyCreateResponse;
 import com.flab.project.investlab.policy.dto.PolicyDetailResponse;
-import com.flab.project.investlab.policy.dto.PolicySummaryResponse;
+import com.flab.project.investlab.policy.dto.PolicyListResponse;
 import com.flab.project.investlab.policy.exception.PolicyErrorCode;
 import com.flab.project.investlab.policy.exception.PolicyException;
 import com.flab.project.investlab.policy.repository.PolicyRepository;
@@ -61,15 +61,16 @@ public class PolicyService {
     }
 
     @Transactional(readOnly = true)
-    public List<PolicySummaryResponse> getMyPolicies(final Jwt jwt) {
-        return policyRepository.findAllByMemberIdOrderByIdDesc(memberIdOf(jwt)).stream()
-                .map(policy -> new PolicySummaryResponse(
+    public PolicyListResponse getMyPolicies(final Jwt jwt) {
+        final List<PolicyListResponse.Item> items = policyRepository.findAllByMemberIdOrderByIdDesc(memberIdOf(jwt)).stream()
+                .map(policy -> new PolicyListResponse.Item(
                         policy.getId(),
                         policy.getName(),
                         policy.getLatestVersionNo(),
                         policy.getCreatedAt()
                 ))
                 .toList();
+        return new PolicyListResponse(items);
     }
 
     @Transactional(readOnly = true)

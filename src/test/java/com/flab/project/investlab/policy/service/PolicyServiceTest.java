@@ -11,6 +11,7 @@ import com.flab.project.investlab.policy.domain.PolicyAllocation;
 import com.flab.project.investlab.policy.domain.PolicyVersion;
 import com.flab.project.investlab.policy.dto.PolicyCreateRequest;
 import com.flab.project.investlab.policy.dto.PolicyDetailResponse;
+import com.flab.project.investlab.policy.dto.PolicyListResponse;
 import com.flab.project.investlab.policy.exception.PolicyErrorCode;
 import com.flab.project.investlab.policy.exception.PolicyException;
 import com.flab.project.investlab.policy.repository.PolicyRepository;
@@ -140,6 +141,25 @@ class PolicyServiceTest {
     }
 
     @Test
+    void 내_규칙_목록을_조회하면_items로_감싸_반환한다() {
+        // given
+        final Policy second = policy(4L, "두번째 규칙", 1);
+        final Policy first = policy(3L, "첫 규칙", 2);
+        when(policyRepository.findAllByMemberIdOrderByIdDesc(10L)).thenReturn(List.of(second, first));
+
+        // when
+        final PolicyListResponse response = policyService.getMyPolicies(jwt);
+
+        // then
+        assertThat(response.items())
+                .extracting(PolicyListResponse.Item::id, PolicyListResponse.Item::name, PolicyListResponse.Item::latestVersionNo)
+                .containsExactly(
+                        tuple(4L, "두번째 규칙", 1),
+                        tuple(3L, "첫 규칙", 2)
+                );
+    }
+
+    @Test
     void 내_규칙을_조회하면_최신_버전을_응답으로_반환한다() {
         // given
         final Policy policy = new Policy(member, "내 규칙");
@@ -178,6 +198,13 @@ class PolicyServiceTest {
                     assertThat(policyException.getErrorCode()).isEqualTo(PolicyErrorCode.POLICY_NOT_FOUND.getCode());
                     assertThat(policyException.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
                 });
+    }
+
+    private Policy policy(final Long id, final String name, final int latestVersionNo) {
+        final Policy policy = new Policy(member, name);
+        PolicyVersion.create(policy, null, latestVersionNo, 1, 500, true, 10_000, List.of());
+        ReflectionTestUtils.setField(policy, "id", id);
+        return policy;
     }
 
     private PolicyCreateRequest request(final Long sourceVersionId, final List<PolicyCreateRequest.Allocation> allocations) {

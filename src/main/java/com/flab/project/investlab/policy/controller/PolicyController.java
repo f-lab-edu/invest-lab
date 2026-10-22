@@ -3,7 +3,7 @@ package com.flab.project.investlab.policy.controller;
 import com.flab.project.investlab.policy.dto.PolicyCreateRequest;
 import com.flab.project.investlab.policy.dto.PolicyCreateResponse;
 import com.flab.project.investlab.policy.dto.PolicyDetailResponse;
-import com.flab.project.investlab.policy.dto.PolicySummaryResponse;
+import com.flab.project.investlab.policy.dto.PolicyListResponse;
 import com.flab.project.investlab.policy.service.PolicyService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -37,7 +35,7 @@ public class PolicyController {
     }
 
     @GetMapping
-    public List<PolicySummaryResponse> getMyPolicies(@AuthenticationPrincipal final Jwt jwt) {
+    public PolicyListResponse getMyPolicies(@AuthenticationPrincipal final Jwt jwt) {
         return policyService.getMyPolicies(jwt);
     }
 
