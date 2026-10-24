@@ -12,12 +12,15 @@ import com.flab.project.investlab.policy.domain.PolicyVersion;
 import com.flab.project.investlab.policy.dto.PolicyCreateRequest;
 import com.flab.project.investlab.policy.dto.PolicyDetailResponse;
 import com.flab.project.investlab.policy.dto.PolicyListResponse;
+import com.flab.project.investlab.policy.dto.PolicyVersionCreateRequest;
+import com.flab.project.investlab.policy.dto.PolicyVersionCreateResponse;
 import com.flab.project.investlab.policy.exception.PolicyErrorCode;
 import com.flab.project.investlab.policy.exception.PolicyException;
 import com.flab.project.investlab.policy.repository.PolicyRepository;
 import com.flab.project.investlab.policy.repository.PolicyVersionRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -31,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -141,6 +145,138 @@ class PolicyServiceTest {
     }
 
     @Test
+    void 최신_버전을_수정하면_기존_버전을_유지하고_같은_규칙의_다음_버전을_저장한다() {
+        // given
+        final Policy policy = new Policy(member, "내 규칙");
+        ReflectionTestUtils.setField(policy, "id", 3L);
+        final PolicyVersion baseVersion = PolicyVersion.create(policy, null, 1, 1, 500, true, 0, null, List.of(
+                new AllocationDraft("미국주식", stockEtf, 10_000)
+        ));
+        ReflectionTestUtils.setField(baseVersion, "id", 11L);
+        when(policyRepository.findMemberPolicyForUpdate(3L, 10L)).thenReturn(Optional.of(policy));
+        when(policyVersionRepository.findByPolicyIdAndVersionNo(3L, 1)).thenReturn(Optional.of(baseVersion));
+        when(instrumentRepository.findAllById(Set.of(2L, 4L))).thenReturn(List.of(stockEtf, bondEtf));
+        when(policyVersionRepository.save(any())).thenAnswer(invocation -> {
+            final PolicyVersion version = invocation.getArgument(0);
+            ReflectionTestUtils.setField(version, "id", 12L);
+            return version;
+        });
+
+        // when
+        final PolicyVersionCreateResponse response = policyService.createVersion(jwt, 3L, versionRequest(11L, List.of(
+                new PolicyVersionCreateRequest.Allocation("미국주식", 2L, 6000),
+                new PolicyVersionCreateRequest.Allocation("국내채권", 4L, 4000)
+        )));
+
+        // then
+        final ArgumentCaptor<PolicyVersion> versionCaptor = ArgumentCaptor.forClass(PolicyVersion.class);
+        final InOrder inOrder = inOrder(policyRepository, policyVersionRepository);
+        inOrder.verify(policyRepository).findMemberPolicyForUpdate(3L, 10L);
+        inOrder.verify(policyVersionRepository).findByPolicyIdAndVersionNo(3L, 1);
+        inOrder.verify(policyVersionRepository).save(versionCaptor.capture());
+        final PolicyVersion savedVersion = versionCaptor.getValue();
+        assertThat(savedVersion.getPolicy()).isSameAs(policy);
+        assertThat(savedVersion.getParentVersion()).isSameAs(baseVersion);
+        assertThat(savedVersion.getVersionNo()).isEqualTo(2);
+        assertThat(policy.getLatestVersionNo()).isEqualTo(2);
+        assertThat(response).isEqualTo(new PolicyVersionCreateResponse(3L, 12L, 2));
+        assertThat(baseVersion.getVersionNo()).isEqualTo(1);
+        assertThat(baseVersion.getChangeReason()).isNull();
+        assertThat(baseVersion.getAllocations())
+                .extracting(PolicyAllocation::getInstrument, PolicyAllocation::getTargetBps)
+                .containsExactly(tuple(stockEtf, 10_000));
+        assertThat(savedVersion.getAllocations())
+                .extracting(PolicyAllocation::getInstrument)
+                .containsExactly(stockEtf, bondEtf);
+        verify(policyRepository, never()).save(any());
+    }
+
+    @Test
+    void 수정할_내_규칙이_없으면_버전을_저장하지_않는다() {
+        // given
+        when(policyRepository.findMemberPolicyForUpdate(3L, 10L)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> policyService.createVersion(jwt, 3L, versionRequest(11L, List.of(
+                new PolicyVersionCreateRequest.Allocation("미국주식", 2L, 10_000)
+        ))))
+                .isInstanceOf(PolicyException.class)
+                .satisfies(exception -> {
+                    final PolicyException policyException = (PolicyException) exception;
+                    assertThat(policyException.getErrorCode()).isEqualTo(PolicyErrorCode.POLICY_NOT_FOUND.getCode());
+                    assertThat(policyException.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                });
+        verify(policyVersionRepository, never()).save(any());
+    }
+
+    @Test
+    void 기준_버전이_최신이_아니면_충돌로_응답하고_저장하지_않는다() {
+        // given
+        final Policy policy = policy(3L, "내 규칙", 2);
+        final PolicyVersion latest = PolicyVersion.create(policy, null, 2, 1, 500, true, 10_000, null, List.of());
+        ReflectionTestUtils.setField(latest, "id", 12L);
+        when(policyRepository.findMemberPolicyForUpdate(3L, 10L)).thenReturn(Optional.of(policy));
+        when(policyVersionRepository.findByPolicyIdAndVersionNo(3L, 2)).thenReturn(Optional.of(latest));
+
+        // when & then
+        assertThatThrownBy(() -> policyService.createVersion(jwt, 3L, versionRequest(11L, List.of(
+                new PolicyVersionCreateRequest.Allocation("미국주식", 2L, 10_000)
+        ))))
+                .isInstanceOf(PolicyException.class)
+                .satisfies(exception -> {
+                    final PolicyException policyException = (PolicyException) exception;
+                    assertThat(policyException.getErrorCode()).isEqualTo(PolicyErrorCode.VERSION_CONFLICT.getCode());
+                    assertThat(policyException.getHttpStatus()).isEqualTo(HttpStatus.CONFLICT);
+                });
+        assertThat(policy.getLatestVersionNo()).isEqualTo(2);
+        verify(policyVersionRepository, never()).save(any());
+        verify(instrumentRepository, never()).findAllById(any());
+    }
+
+    @Test
+    void 수정_배분에_없는_ETF가_있으면_최신_번호를_바꾸거나_저장하지_않는다() {
+        // given
+        final Policy policy = policy(3L, "내 규칙", 1);
+        final PolicyVersion baseVersion = PolicyVersion.create(policy, null, 1, 1, 500, true, 10_000, null, List.of());
+        ReflectionTestUtils.setField(baseVersion, "id", 11L);
+        when(policyRepository.findMemberPolicyForUpdate(3L, 10L)).thenReturn(Optional.of(policy));
+        when(policyVersionRepository.findByPolicyIdAndVersionNo(3L, 1)).thenReturn(Optional.of(baseVersion));
+        when(instrumentRepository.findAllById(Set.of(2L, 999L))).thenReturn(List.of(stockEtf));
+
+        // when & then
+        assertThatThrownBy(() -> policyService.createVersion(jwt, 3L, versionRequest(11L, List.of(
+                new PolicyVersionCreateRequest.Allocation("미국주식", 2L, 6000),
+                new PolicyVersionCreateRequest.Allocation("국내채권", 999L, 4000)
+        ))))
+                .isInstanceOf(PolicyException.class)
+                .extracting(exception -> ((PolicyException) exception).getErrorCode())
+                .isEqualTo(PolicyErrorCode.INSTRUMENT_NOT_FOUND.getCode());
+        assertThat(policy.getLatestVersionNo()).isEqualTo(1);
+        verify(policyVersionRepository, never()).save(any());
+    }
+
+    @Test
+    void 수정_비중_합계가_잘못되면_최신_번호를_바꾸거나_저장하지_않는다() {
+        // given
+        final Policy policy = policy(3L, "내 규칙", 1);
+        final PolicyVersion baseVersion = PolicyVersion.create(policy, null, 1, 1, 500, true, 10_000, null, List.of());
+        ReflectionTestUtils.setField(baseVersion, "id", 11L);
+        when(policyRepository.findMemberPolicyForUpdate(3L, 10L)).thenReturn(Optional.of(policy));
+        when(policyVersionRepository.findByPolicyIdAndVersionNo(3L, 1)).thenReturn(Optional.of(baseVersion));
+        when(instrumentRepository.findAllById(Set.of(2L))).thenReturn(List.of(stockEtf));
+
+        // when & then
+        assertThatThrownBy(() -> policyService.createVersion(jwt, 3L, versionRequest(11L, List.of(
+                new PolicyVersionCreateRequest.Allocation("미국주식", 2L, 9999)
+        ))))
+                .isInstanceOf(PolicyException.class)
+                .extracting(exception -> ((PolicyException) exception).getErrorCode())
+                .isEqualTo(PolicyErrorCode.TARGET_SUM_INVALID.getCode());
+        assertThat(policy.getLatestVersionNo()).isEqualTo(1);
+        verify(policyVersionRepository, never()).save(any());
+    }
+
+    @Test
     void 내_규칙_목록을_조회하면_items로_감싸_반환한다() {
         // given
         final Policy second = policy(4L, "두번째 규칙", 1);
@@ -209,6 +345,13 @@ class PolicyServiceTest {
 
     private PolicyCreateRequest request(final Long sourceVersionId, final List<PolicyCreateRequest.Allocation> allocations) {
         return new PolicyCreateRequest("내 첫 규칙", sourceVersionId, 1, 500, true, 0, allocations);
+    }
+
+    private PolicyVersionCreateRequest versionRequest(
+            final Long baseVersionId,
+            final List<PolicyVersionCreateRequest.Allocation> allocations
+    ) {
+        return new PolicyVersionCreateRequest(baseVersionId, "채권 비중을 늘려 비교합니다.", 1, 500, true, 0, allocations);
     }
 
     private Instrument instrument(final Long id, final String symbol, final String name) {

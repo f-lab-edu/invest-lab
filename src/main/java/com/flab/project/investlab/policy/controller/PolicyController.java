@@ -4,6 +4,8 @@ import com.flab.project.investlab.policy.dto.PolicyCreateRequest;
 import com.flab.project.investlab.policy.dto.PolicyCreateResponse;
 import com.flab.project.investlab.policy.dto.PolicyDetailResponse;
 import com.flab.project.investlab.policy.dto.PolicyListResponse;
+import com.flab.project.investlab.policy.dto.PolicyVersionCreateRequest;
+import com.flab.project.investlab.policy.dto.PolicyVersionCreateResponse;
 import com.flab.project.investlab.policy.service.PolicyService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,16 @@ public class PolicyController {
             @Valid @RequestBody final PolicyCreateRequest request
     ) {
         return policyService.create(jwt, request);
+    }
+
+    @PostMapping("/{policyId}/versions")
+    @ResponseStatus(HttpStatus.CREATED)
+    public PolicyVersionCreateResponse createVersion(
+            @AuthenticationPrincipal final Jwt jwt,
+            @PathVariable final Long policyId,
+            @Valid @RequestBody final PolicyVersionCreateRequest request
+    ) {
+        return policyService.createVersion(jwt, policyId, request);
     }
 
     @GetMapping

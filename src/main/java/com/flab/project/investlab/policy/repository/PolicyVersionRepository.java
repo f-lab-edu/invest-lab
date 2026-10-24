@@ -22,6 +22,8 @@ public interface PolicyVersionRepository extends JpaRepository<PolicyVersion, Lo
 
     Optional<PolicyVersion> findByIdAndPolicyMemberIsNull(Long id);
 
+    Optional<PolicyVersion> findByPolicyIdAndVersionNo(Long policyId, int versionNo);
+
     @Query("""
             select v from PolicyVersion v
             join fetch v.policy p

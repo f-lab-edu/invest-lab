@@ -138,6 +138,64 @@ class PolicyVersionRepositoryTest {
         assertThat(found).isEmpty();
     }
 
+    @Test
+    void 정책과_번호로_버전을_조회할_때_배분과_정책을_함께_가져오지_않는다() {
+        // given
+        final Member member = entityManager.persist(new Member("member@example.com", "encoded-password", "investor"));
+        final Policy policy = entityManager.persist(new Policy(member, "내 규칙"));
+        final Policy otherPolicy = entityManager.persist(new Policy(member, "다른 규칙"));
+        persistVersion(policy, 1);
+        final PolicyVersion baseVersion = persistVersion(policy, 2);
+        persistVersion(otherPolicy, 2);
+        persistVersion(otherPolicy, 3);
+        entityManager.flush();
+        entityManager.clear();
+
+        // when
+        final PolicyVersion found = policyVersionRepository.findByPolicyIdAndVersionNo(policy.getId(), 2)
+                .orElseThrow();
+
+        // then
+        assertThat(found.getId()).isEqualTo(baseVersion.getId());
+        final PersistenceUnitUtil persistenceUnitUtil = entityManager.getEntityManager()
+                .getEntityManagerFactory()
+                .getPersistenceUnitUtil();
+        assertThat(persistenceUnitUtil.isLoaded(found, "allocations")).isFalse();
+        assertThat(persistenceUnitUtil.isLoaded(found, "policy")).isFalse();
+    }
+
+    @Test
+    void 다른_정책에만_있는_버전_번호면_빈_결과를_반환한다() {
+        // given
+        final Policy policy = entityManager.persist(new Policy(null, "프리셋"));
+        final Policy otherPolicy = entityManager.persist(new Policy(null, "다른 프리셋"));
+        persistVersion(policy, 1);
+        persistVersion(otherPolicy, 2);
+        entityManager.flush();
+        entityManager.clear();
+
+        // when
+        final Optional<PolicyVersion> found = policyVersionRepository.findByPolicyIdAndVersionNo(policy.getId(), 2);
+
+        // then
+        assertThat(found).isEmpty();
+    }
+
+    @Test
+    void 없는_정책의_버전을_조회하면_빈_결과를_반환한다() {
+        // given
+        final Policy policy = entityManager.persist(new Policy(null, "프리셋"));
+        persistVersion(policy, 1);
+        entityManager.flush();
+        entityManager.clear();
+
+        // when
+        final Optional<PolicyVersion> found = policyVersionRepository.findByPolicyIdAndVersionNo(Long.MAX_VALUE, 1);
+
+        // then
+        assertThat(found).isEmpty();
+    }
+
     private PolicyVersion persistVersion(final Policy policy, final int versionNo) {
         final Instrument instrument = instrumentRepository.findAllByOrderByNameAsc().get(0);
         final PolicyVersion version = PolicyVersion.create(policy, null, versionNo, 1, 500, true, 0, null, List.of(
