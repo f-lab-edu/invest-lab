@@ -140,7 +140,7 @@ class PolicyVersionRepositoryTest {
 
     private PolicyVersion persistVersion(final Policy policy, final int versionNo) {
         final Instrument instrument = instrumentRepository.findAllByOrderByNameAsc().get(0);
-        final PolicyVersion version = PolicyVersion.create(policy, null, versionNo, 1, 500, true, 0, List.of(
+        final PolicyVersion version = PolicyVersion.create(policy, null, versionNo, 1, 500, true, 0, null, List.of(
                 new AllocationDraft("국내주식", instrument, 10_000)
         ));
         return entityManager.persist(version);

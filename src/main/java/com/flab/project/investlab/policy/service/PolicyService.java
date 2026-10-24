@@ -52,6 +52,7 @@ public class PolicyService {
                 request.thresholdBps(),
                 request.allowSell(),
                 request.cashTargetBps(),
+                null,
                 drafts
         );
 

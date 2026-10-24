@@ -59,7 +59,7 @@ class PolicyServiceTest {
     @Test
     void 프리셋을_복사해_저장하면_프리셋_버전을_부모로_하는_첫_버전을_저장한다() {
         // given
-        final PolicyVersion presetVersion = PolicyVersion.create(new Policy(null, "프리셋"), null, 1, 1, 500, true, 10_000, List.of());
+        final PolicyVersion presetVersion = PolicyVersion.create(new Policy(null, "프리셋"), null, 1, 1, 500, true, 10_000, null, List.of());
         when(policyVersionRepository.findByIdAndPolicyMemberIsNull(1L)).thenReturn(Optional.of(presetVersion));
         when(instrumentRepository.findAllById(Set.of(2L, 4L))).thenReturn(List.of(stockEtf, bondEtf));
         when(memberRepository.getReferenceById(10L)).thenReturn(member);
@@ -163,7 +163,7 @@ class PolicyServiceTest {
     void 내_규칙을_조회하면_최신_버전을_응답으로_반환한다() {
         // given
         final Policy policy = new Policy(member, "내 규칙");
-        final PolicyVersion version = PolicyVersion.create(policy, null, 2, 3, 300, false, 1000, List.of(
+        final PolicyVersion version = PolicyVersion.create(policy, null, 2, 3, 300, false, 1000, null, List.of(
                 new AllocationDraft("미국주식", stockEtf, 9000)
         ));
         when(policyVersionRepository.findLatestMemberVersion(3L, 10L)).thenReturn(Optional.of(version));
@@ -202,7 +202,7 @@ class PolicyServiceTest {
 
     private Policy policy(final Long id, final String name, final int latestVersionNo) {
         final Policy policy = new Policy(member, name);
-        PolicyVersion.create(policy, null, latestVersionNo, 1, 500, true, 10_000, List.of());
+        PolicyVersion.create(policy, null, latestVersionNo, 1, 500, true, 10_000, null, List.of());
         ReflectionTestUtils.setField(policy, "id", id);
         return policy;
     }

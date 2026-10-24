@@ -72,7 +72,7 @@ class PolicyRepositoryTest {
     private Policy persistPolicy(final Member member, final String name, final int versionCount) {
         final Policy policy = entityManager.persist(new Policy(member, name));
         for (int versionNo = 1; versionNo <= versionCount; versionNo++) {
-            entityManager.persist(PolicyVersion.create(policy, null, versionNo, 1, 500, true, 10_000, List.of()));
+            entityManager.persist(PolicyVersion.create(policy, null, versionNo, 1, 500, true, 10_000, null, List.of()));
         }
         return policy;
     }
