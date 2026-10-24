@@ -60,6 +60,9 @@ public class PolicyVersion {
     @Column(name = "cash_target_bps", nullable = false)
     private int cashTargetBps;
 
+    @Column(name = "change_reason", length = 300)
+    private String changeReason;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
