@@ -10,6 +10,11 @@ public enum PolicyErrorCode implements ErrorCode {
             HttpStatus.NOT_FOUND,
             "규칙을 찾을 수 없습니다."
     ),
+    VERSION_NOT_FOUND(
+            "POLICY_VERSION_NOT_FOUND",
+            HttpStatus.NOT_FOUND,
+            "규칙 버전을 찾을 수 없습니다."
+    ),
     VERSION_CONFLICT(
             "POLICY_VERSION_CONFLICT",
             HttpStatus.CONFLICT,

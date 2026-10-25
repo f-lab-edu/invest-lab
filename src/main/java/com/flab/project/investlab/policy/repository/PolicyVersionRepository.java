@@ -40,6 +40,21 @@ public interface PolicyVersionRepository extends JpaRepository<PolicyVersion, Lo
             left join fetch v.allocations a
             left join fetch a.instrument
             where p.id = :policyId
+              and v.id = :versionId
+              and p.member.id = :memberId
+            """)
+    Optional<PolicyVersion> findMemberVersion(
+            @Param("policyId") Long policyId,
+            @Param("versionId") Long versionId,
+            @Param("memberId") Long memberId
+    );
+
+    @Query("""
+            select v from PolicyVersion v
+            join fetch v.policy p
+            left join fetch v.allocations a
+            left join fetch a.instrument
+            where p.id = :policyId
               and p.member.id = :memberId
               and v.versionNo = p.latestVersionNo
             """)

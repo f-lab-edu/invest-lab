@@ -14,6 +14,7 @@ import com.flab.project.investlab.policy.dto.PolicyDetailResponse;
 import com.flab.project.investlab.policy.dto.PolicyListResponse;
 import com.flab.project.investlab.policy.dto.PolicyVersionCreateRequest;
 import com.flab.project.investlab.policy.dto.PolicyVersionCreateResponse;
+import com.flab.project.investlab.policy.dto.PolicyVersionDetailResponse;
 import com.flab.project.investlab.policy.dto.PolicyVersionListResponse;
 import com.flab.project.investlab.policy.exception.PolicyErrorCode;
 import com.flab.project.investlab.policy.exception.PolicyException;
@@ -378,6 +379,82 @@ class PolicyServiceTest {
                 .satisfies(exception -> {
                     final PolicyException policyException = (PolicyException) exception;
                     assertThat(policyException.getErrorCode()).isEqualTo(PolicyErrorCode.POLICY_NOT_FOUND.getCode());
+                    assertThat(policyException.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                });
+    }
+
+    @Test
+    void 선택한_버전의_상세와_부모_ID를_응답으로_반환한다() {
+        // given
+        final Policy policy = new Policy(member, "내 규칙");
+        ReflectionTestUtils.setField(policy, "id", 3L);
+        final PolicyVersion first = PolicyVersion.create(policy, null, 1, 1, 500, true, 0, null, List.of(
+                new AllocationDraft("미국주식", stockEtf, 10_000)
+        ));
+        ReflectionTestUtils.setField(first, "id", 11L);
+        final String changeReason = "allocation-adjustment";
+        final PolicyVersion selected = PolicyVersion.create(policy, first, 2, 3, 300, false, 1000, changeReason, List.of(
+                new AllocationDraft("미국주식", stockEtf, 6000),
+                new AllocationDraft("국내채권", bondEtf, 3000)
+        ));
+        ReflectionTestUtils.setField(selected, "id", 12L);
+        final Instant createdAt = Instant.parse("2026-10-25T10:00:00Z");
+        ReflectionTestUtils.setField(selected, "createdAt", createdAt);
+        PolicyVersion.create(policy, selected, 3, 6, 900, true, 10_000, null, List.of());
+        when(policyVersionRepository.findMemberVersion(3L, 12L, 10L)).thenReturn(Optional.of(selected));
+
+        // when
+        final PolicyVersionDetailResponse response = policyService.getMyPolicyVersion(jwt, 3L, 12L);
+
+        // then
+        assertThat(response.policyId()).isEqualTo(3L);
+        assertThat(response.versionId()).isEqualTo(12L);
+        assertThat(response.versionNo()).isEqualTo(2);
+        assertThat(response.parentVersionId()).isEqualTo(11L);
+        assertThat(response.changeReason()).isEqualTo(changeReason);
+        assertThat(response.createdAt()).isEqualTo(createdAt);
+        assertThat(response.reviewIntervalMonths()).isEqualTo(3);
+        assertThat(response.thresholdBps()).isEqualTo(300);
+        assertThat(response.allowSell()).isFalse();
+        assertThat(response.cashTargetBps()).isEqualTo(1000);
+        assertThat(response.allocations())
+                .extracting(PolicyVersionDetailResponse.Allocation::assetClass,
+                        PolicyVersionDetailResponse.Allocation::instrumentId,
+                        PolicyVersionDetailResponse.Allocation::targetBps)
+                .containsExactly(
+                        tuple("미국주식", 2L, 6000),
+                        tuple("국내채권", 4L, 3000)
+                );
+    }
+
+    @Test
+    void 직접_만든_첫_버전의_상세는_부모와_수정_이유가_없다() {
+        // given
+        final Policy policy = new Policy(member, "내 규칙");
+        final PolicyVersion version = PolicyVersion.create(policy, null, 1, 1, 500, true, 0, null, List.of(
+                new AllocationDraft("미국주식", stockEtf, 10_000)
+        ));
+        when(policyVersionRepository.findMemberVersion(3L, 11L, 10L)).thenReturn(Optional.of(version));
+
+        // when
+        final PolicyVersionDetailResponse response = policyService.getMyPolicyVersion(jwt, 3L, 11L);
+
+        // then
+        assertThat(response.parentVersionId()).isNull();
+        assertThat(response.changeReason()).isNull();
+    }
+
+    @Test
+    void 조회할_내_버전이_없으면_버전_조회_불가_404로_처리한다() {
+        // given
+        when(policyVersionRepository.findMemberVersion(3L, 11L, 10L)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> policyService.getMyPolicyVersion(jwt, 3L, 11L))
+                .isInstanceOf(PolicyException.class)
+                .satisfies(exception -> {
+                    final PolicyException policyException = (PolicyException) exception;
+                    assertThat(policyException.getErrorCode()).isEqualTo(PolicyErrorCode.VERSION_NOT_FOUND.getCode());
                     assertThat(policyException.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
                 });
     }
