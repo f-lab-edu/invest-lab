@@ -60,6 +60,9 @@ public class PolicyVersion {
     @Column(name = "cash_target_bps", nullable = false)
     private int cashTargetBps;
 
+    @Column(name = "change_reason", length = 300)
+    private String changeReason;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -78,7 +81,8 @@ public class PolicyVersion {
             final int reviewIntervalMonths,
             final int thresholdBps,
             final boolean allowSell,
-            final int cashTargetBps
+            final int cashTargetBps,
+            final String changeReason
     ) {
         this.policy = policy;
         this.parentVersion = parentVersion;
@@ -87,6 +91,7 @@ public class PolicyVersion {
         this.thresholdBps = thresholdBps;
         this.allowSell = allowSell;
         this.cashTargetBps = cashTargetBps;
+        this.changeReason = changeReason;
     }
 
     public static PolicyVersion create(
@@ -97,6 +102,7 @@ public class PolicyVersion {
             final int thresholdBps,
             final boolean allowSell,
             final int cashTargetBps,
+            final String changeReason,
             final List<AllocationDraft> drafts
     ) {
         validateNoDuplicateAssetClass(drafts);
@@ -110,7 +116,8 @@ public class PolicyVersion {
                 reviewIntervalMonths,
                 thresholdBps,
                 allowSell,
-                cashTargetBps
+                cashTargetBps,
+                changeReason
         );
         for (final AllocationDraft draft : drafts) {
             version.addAllocation(draft.assetClass().strip(), draft.instrument(), draft.targetBps());

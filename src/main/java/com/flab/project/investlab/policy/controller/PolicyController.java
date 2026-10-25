@@ -4,6 +4,10 @@ import com.flab.project.investlab.policy.dto.PolicyCreateRequest;
 import com.flab.project.investlab.policy.dto.PolicyCreateResponse;
 import com.flab.project.investlab.policy.dto.PolicyDetailResponse;
 import com.flab.project.investlab.policy.dto.PolicyListResponse;
+import com.flab.project.investlab.policy.dto.PolicyVersionCreateRequest;
+import com.flab.project.investlab.policy.dto.PolicyVersionCreateResponse;
+import com.flab.project.investlab.policy.dto.PolicyVersionDetailResponse;
+import com.flab.project.investlab.policy.dto.PolicyVersionListResponse;
 import com.flab.project.investlab.policy.service.PolicyService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +38,16 @@ public class PolicyController {
         return policyService.create(jwt, request);
     }
 
+    @PostMapping("/{policyId}/versions")
+    @ResponseStatus(HttpStatus.CREATED)
+    public PolicyVersionCreateResponse createVersion(
+            @AuthenticationPrincipal final Jwt jwt,
+            @PathVariable final Long policyId,
+            @Valid @RequestBody final PolicyVersionCreateRequest request
+    ) {
+        return policyService.createVersion(jwt, policyId, request);
+    }
+
     @GetMapping
     public PolicyListResponse getMyPolicies(@AuthenticationPrincipal final Jwt jwt) {
         return policyService.getMyPolicies(jwt);
@@ -45,5 +59,22 @@ public class PolicyController {
             @PathVariable final Long policyId
     ) {
         return policyService.getMyPolicy(jwt, policyId);
+    }
+
+    @GetMapping("/{policyId}/versions")
+    public PolicyVersionListResponse getMyPolicyVersions(
+            @AuthenticationPrincipal final Jwt jwt,
+            @PathVariable final Long policyId
+    ) {
+        return policyService.getMyPolicyVersions(jwt, policyId);
+    }
+
+    @GetMapping("/{policyId}/versions/{versionId}")
+    public PolicyVersionDetailResponse getMyPolicyVersion(
+            @AuthenticationPrincipal final Jwt jwt,
+            @PathVariable final Long policyId,
+            @PathVariable final Long versionId
+    ) {
+        return policyService.getMyPolicyVersion(jwt, policyId, versionId);
     }
 }

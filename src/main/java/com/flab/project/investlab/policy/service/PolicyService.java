@@ -11,6 +11,10 @@ import com.flab.project.investlab.policy.dto.PolicyCreateRequest;
 import com.flab.project.investlab.policy.dto.PolicyCreateResponse;
 import com.flab.project.investlab.policy.dto.PolicyDetailResponse;
 import com.flab.project.investlab.policy.dto.PolicyListResponse;
+import com.flab.project.investlab.policy.dto.PolicyVersionCreateRequest;
+import com.flab.project.investlab.policy.dto.PolicyVersionCreateResponse;
+import com.flab.project.investlab.policy.dto.PolicyVersionDetailResponse;
+import com.flab.project.investlab.policy.dto.PolicyVersionListResponse;
 import com.flab.project.investlab.policy.exception.PolicyErrorCode;
 import com.flab.project.investlab.policy.exception.PolicyException;
 import com.flab.project.investlab.policy.repository.PolicyRepository;
@@ -52,12 +56,43 @@ public class PolicyService {
                 request.thresholdBps(),
                 request.allowSell(),
                 request.cashTargetBps(),
+                null,
                 drafts
         );
 
         policyRepository.save(policy);
         policyVersionRepository.save(version);
         return new PolicyCreateResponse(policy.getId(), version.getId());
+    }
+
+    @Transactional
+    public PolicyVersionCreateResponse createVersion(
+            final Jwt jwt,
+            final Long policyId,
+            final PolicyVersionCreateRequest request
+    ) {
+        final Long memberId = memberIdOf(jwt);
+        final Policy policy = policyRepository.findMemberPolicyForUpdate(policyId, memberId)
+                .orElseThrow(() -> new PolicyException(PolicyErrorCode.POLICY_NOT_FOUND));
+        final PolicyVersion baseVersion = policyVersionRepository.findByPolicyIdAndVersionNo(policyId, policy.getLatestVersionNo())
+                .orElseThrow(() -> new PolicyException(PolicyErrorCode.POLICY_NOT_FOUND));
+        validateBaseVersion(baseVersion.getId(), request.baseVersionId());
+
+        final List<AllocationDraft> drafts = toVersionDrafts(request.allocations());
+        final PolicyVersion version = PolicyVersion.create(
+                policy,
+                baseVersion,
+                policy.getLatestVersionNo() + 1,
+                request.reviewIntervalMonths(),
+                request.thresholdBps(),
+                request.allowSell(),
+                request.cashTargetBps(),
+                request.changeReason(),
+                drafts
+        );
+
+        policyVersionRepository.save(version);
+        return new PolicyVersionCreateResponse(policy.getId(), version.getId(), version.getVersionNo());
     }
 
     @Transactional(readOnly = true)
@@ -80,6 +115,31 @@ public class PolicyService {
         return PolicyDetailResponse.from(version);
     }
 
+    @Transactional(readOnly = true)
+    public PolicyVersionListResponse getMyPolicyVersions(final Jwt jwt, final Long policyId) {
+        final List<PolicyVersion> versions = policyVersionRepository.findMemberVersions(policyId, memberIdOf(jwt));
+        if (versions.isEmpty()) {
+            throw new PolicyException(PolicyErrorCode.POLICY_NOT_FOUND);
+        }
+        final List<PolicyVersionListResponse.Item> items = versions.stream()
+                .map(PolicyVersionListResponse.Item::from)
+                .toList();
+        return new PolicyVersionListResponse(items);
+    }
+
+    @Transactional(readOnly = true)
+    public PolicyVersionDetailResponse getMyPolicyVersion(final Jwt jwt, final Long policyId, final Long versionId) {
+        final PolicyVersion version = policyVersionRepository.findMemberVersion(policyId, versionId, memberIdOf(jwt))
+                .orElseThrow(() -> new PolicyException(PolicyErrorCode.VERSION_NOT_FOUND));
+        return PolicyVersionDetailResponse.from(version);
+    }
+
+    private void validateBaseVersion(final Long latestVersionId, final Long baseVersionId) {
+        if (!latestVersionId.equals(baseVersionId)) {
+            throw new PolicyException(PolicyErrorCode.VERSION_CONFLICT);
+        }
+    }
+
     private Long memberIdOf(final Jwt jwt) {
         return Long.valueOf(jwt.getSubject());
     }
@@ -96,11 +156,7 @@ public class PolicyService {
         final Set<Long> instrumentIds = allocations.stream()
                 .map(PolicyCreateRequest.Allocation::instrumentId)
                 .collect(Collectors.toSet());
-        final Map<Long, Instrument> instruments = instrumentRepository.findAllById(instrumentIds).stream()
-                .collect(Collectors.toMap(Instrument::getId, Function.identity()));
-        if (instruments.size() != instrumentIds.size()) {
-            throw new PolicyException(PolicyErrorCode.INSTRUMENT_NOT_FOUND);
-        }
+        final Map<Long, Instrument> instruments = findInstruments(instrumentIds);
 
         return allocations.stream()
                 .map(allocation -> new AllocationDraft(
@@ -109,5 +165,29 @@ public class PolicyService {
                         allocation.targetBps()
                 ))
                 .toList();
+    }
+
+    private List<AllocationDraft> toVersionDrafts(final List<PolicyVersionCreateRequest.Allocation> allocations) {
+        final Set<Long> instrumentIds = allocations.stream()
+                .map(PolicyVersionCreateRequest.Allocation::instrumentId)
+                .collect(Collectors.toSet());
+        final Map<Long, Instrument> instruments = findInstruments(instrumentIds);
+
+        return allocations.stream()
+                .map(allocation -> new AllocationDraft(
+                        allocation.assetClass(),
+                        instruments.get(allocation.instrumentId()),
+                        allocation.targetBps()
+                ))
+                .toList();
+    }
+
+    private Map<Long, Instrument> findInstruments(final Set<Long> instrumentIds) {
+        final Map<Long, Instrument> instruments = instrumentRepository.findAllById(instrumentIds).stream()
+                .collect(Collectors.toMap(Instrument::getId, Function.identity()));
+        if (instruments.size() != instrumentIds.size()) {
+            throw new PolicyException(PolicyErrorCode.INSTRUMENT_NOT_FOUND);
+        }
+        return instruments;
     }
 }

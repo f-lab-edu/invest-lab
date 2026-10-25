@@ -23,10 +23,10 @@ class PolicyVersionTest {
     @Test
     void 배분과_현금_합계가_10000이면_버전을_생성한다() {
         // given
-        final PolicyVersion parent = PolicyVersion.create(policy, null, 1, 1, 500, true, 10_000, List.of());
+        final PolicyVersion parent = PolicyVersion.create(policy, null, 1, 1, 500, true, 10_000, null, List.of());
 
         // when
-        final PolicyVersion version = PolicyVersion.create(policy, parent, 2, 3, 300, false, 0, List.of(
+        final PolicyVersion version = PolicyVersion.create(policy, parent, 2, 3, 300, false, 0, null, List.of(
                 new AllocationDraft("  미국주식 ", stockEtf, 6000),
                 new AllocationDraft("국내채권", bondEtf, 4000)
         ));
@@ -50,10 +50,10 @@ class PolicyVersionTest {
     @Test
     void 버전을_생성하면_규칙의_최신_버전_번호가_바뀐다() {
         // given
-        PolicyVersion.create(policy, null, 1, 1, 500, true, 10_000, List.of());
+        PolicyVersion.create(policy, null, 1, 1, 500, true, 10_000, null, List.of());
 
         // when
-        PolicyVersion.create(policy, null, 2, 1, 500, true, 10_000, List.of());
+        PolicyVersion.create(policy, null, 2, 1, 500, true, 10_000, null, List.of());
 
         // then
         assertThat(policy.getLatestVersionNo()).isEqualTo(2);
@@ -62,7 +62,7 @@ class PolicyVersionTest {
     @Test
     void 현금을_포함해_합계가_10000이면_버전을_생성한다() {
         // when
-        final PolicyVersion version = PolicyVersion.create(policy, null, 1, 1, 500, true, 1000, List.of(
+        final PolicyVersion version = PolicyVersion.create(policy, null, 1, 1, 500, true, 1000, null, List.of(
                 new AllocationDraft("미국주식", stockEtf, 5000),
                 new AllocationDraft("국내채권", bondEtf, 4000)
         ));
@@ -76,7 +76,7 @@ class PolicyVersionTest {
     @ValueSource(ints = {9999, 10_001})
     void 배분과_현금_합계가_10000이_아니면_예외가_발생한다(final int totalBps) {
         // when & then
-        assertThatThrownBy(() -> PolicyVersion.create(policy, null, 1, 1, 500, true, 0, List.of(
+        assertThatThrownBy(() -> PolicyVersion.create(policy, null, 1, 1, 500, true, 0, null, List.of(
                 new AllocationDraft("미국주식", stockEtf, 6000),
                 new AllocationDraft("국내채권", bondEtf, totalBps - 6000)
         )))
@@ -88,7 +88,7 @@ class PolicyVersionTest {
     @Test
     void 앞뒤_공백만_다른_자산군은_중복으로_판단한다() {
         // when & then
-        assertThatThrownBy(() -> PolicyVersion.create(policy, null, 1, 1, 500, true, 0, List.of(
+        assertThatThrownBy(() -> PolicyVersion.create(policy, null, 1, 1, 500, true, 0, null, List.of(
                 new AllocationDraft("미국주식", stockEtf, 6000),
                 new AllocationDraft(" 미국주식 ", bondEtf, 4000)
         )))
@@ -100,7 +100,7 @@ class PolicyVersionTest {
     @Test
     void 같은_ETF를_두_자산군에_배분하면_예외가_발생한다() {
         // when & then
-        assertThatThrownBy(() -> PolicyVersion.create(policy, null, 1, 1, 500, true, 0, List.of(
+        assertThatThrownBy(() -> PolicyVersion.create(policy, null, 1, 1, 500, true, 0, null, List.of(
                 new AllocationDraft("미국주식", stockEtf, 6000),
                 new AllocationDraft("해외주식", stockEtf, 4000)
         )))

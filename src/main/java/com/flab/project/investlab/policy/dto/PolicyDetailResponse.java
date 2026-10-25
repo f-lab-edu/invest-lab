@@ -15,6 +15,7 @@ public record PolicyDetailResponse(
         int thresholdBps,
         boolean allowSell,
         int cashTargetBps,
+        String changeReason,
         List<Allocation> allocations
 ) {
 
@@ -29,6 +30,7 @@ public record PolicyDetailResponse(
                 version.getThresholdBps(),
                 version.isAllowSell(),
                 version.getCashTargetBps(),
+                version.getChangeReason(),
                 version.getAllocations().stream()
                         .map(Allocation::from)
                         .toList()
