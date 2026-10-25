@@ -13,6 +13,7 @@ import com.flab.project.investlab.policy.dto.PolicyDetailResponse;
 import com.flab.project.investlab.policy.dto.PolicyListResponse;
 import com.flab.project.investlab.policy.dto.PolicyVersionCreateRequest;
 import com.flab.project.investlab.policy.dto.PolicyVersionCreateResponse;
+import com.flab.project.investlab.policy.dto.PolicyVersionListResponse;
 import com.flab.project.investlab.policy.exception.PolicyErrorCode;
 import com.flab.project.investlab.policy.exception.PolicyException;
 import com.flab.project.investlab.policy.repository.PolicyRepository;
@@ -111,6 +112,18 @@ public class PolicyService {
         final PolicyVersion version = policyVersionRepository.findLatestMemberVersion(policyId, memberIdOf(jwt))
                 .orElseThrow(() -> new PolicyException(PolicyErrorCode.POLICY_NOT_FOUND));
         return PolicyDetailResponse.from(version);
+    }
+
+    @Transactional(readOnly = true)
+    public PolicyVersionListResponse getMyPolicyVersions(final Jwt jwt, final Long policyId) {
+        final List<PolicyVersion> versions = policyVersionRepository.findMemberVersions(policyId, memberIdOf(jwt));
+        if (versions.isEmpty()) {
+            throw new PolicyException(PolicyErrorCode.POLICY_NOT_FOUND);
+        }
+        final List<PolicyVersionListResponse.Item> items = versions.stream()
+                .map(PolicyVersionListResponse.Item::from)
+                .toList();
+        return new PolicyVersionListResponse(items);
     }
 
     private void validateBaseVersion(final Long latestVersionId, final Long baseVersionId) {

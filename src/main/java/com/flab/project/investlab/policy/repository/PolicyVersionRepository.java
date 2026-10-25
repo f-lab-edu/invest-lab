@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface PolicyVersionRepository extends JpaRepository<PolicyVersion, Long> {
@@ -23,6 +24,15 @@ public interface PolicyVersionRepository extends JpaRepository<PolicyVersion, Lo
     Optional<PolicyVersion> findByIdAndPolicyMemberIsNull(Long id);
 
     Optional<PolicyVersion> findByPolicyIdAndVersionNo(Long policyId, int versionNo);
+
+    @Query("""
+            select v from PolicyVersion v
+            join v.policy p
+            where p.id = :policyId
+              and p.member.id = :memberId
+            order by v.versionNo desc
+            """)
+    List<PolicyVersion> findMemberVersions(@Param("policyId") Long policyId, @Param("memberId") Long memberId);
 
     @Query("""
             select v from PolicyVersion v

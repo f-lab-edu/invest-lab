@@ -6,6 +6,7 @@ import com.flab.project.investlab.policy.dto.PolicyDetailResponse;
 import com.flab.project.investlab.policy.dto.PolicyListResponse;
 import com.flab.project.investlab.policy.dto.PolicyVersionCreateRequest;
 import com.flab.project.investlab.policy.dto.PolicyVersionCreateResponse;
+import com.flab.project.investlab.policy.dto.PolicyVersionListResponse;
 import com.flab.project.investlab.policy.service.PolicyService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -57,5 +58,13 @@ public class PolicyController {
             @PathVariable final Long policyId
     ) {
         return policyService.getMyPolicy(jwt, policyId);
+    }
+
+    @GetMapping("/{policyId}/versions")
+    public PolicyVersionListResponse getMyPolicyVersions(
+            @AuthenticationPrincipal final Jwt jwt,
+            @PathVariable final Long policyId
+    ) {
+        return policyService.getMyPolicyVersions(jwt, policyId);
     }
 }

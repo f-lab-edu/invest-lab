@@ -14,6 +14,7 @@ import com.flab.project.investlab.policy.dto.PolicyDetailResponse;
 import com.flab.project.investlab.policy.dto.PolicyListResponse;
 import com.flab.project.investlab.policy.dto.PolicyVersionCreateRequest;
 import com.flab.project.investlab.policy.dto.PolicyVersionCreateResponse;
+import com.flab.project.investlab.policy.dto.PolicyVersionListResponse;
 import com.flab.project.investlab.policy.exception.PolicyErrorCode;
 import com.flab.project.investlab.policy.exception.PolicyException;
 import com.flab.project.investlab.policy.repository.PolicyRepository;
@@ -25,6 +26,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -328,6 +330,50 @@ class PolicyServiceTest {
 
         // when & then
         assertThatThrownBy(() -> policyService.getMyPolicy(jwt, 3L))
+                .isInstanceOf(PolicyException.class)
+                .satisfies(exception -> {
+                    final PolicyException policyException = (PolicyException) exception;
+                    assertThat(policyException.getErrorCode()).isEqualTo(PolicyErrorCode.POLICY_NOT_FOUND.getCode());
+                    assertThat(policyException.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+                });
+    }
+
+    @Test
+    void 버전_목록은_부모_연결과_첫_버전의_null_수정_이유를_반환한다() {
+        // given
+        final Policy policy = new Policy(member, "내 규칙");
+        final PolicyVersion first = PolicyVersion.create(policy, null, 1, 1, 500, true, 10_000, null, List.of());
+        ReflectionTestUtils.setField(first, "id", 11L);
+        final PolicyVersion second = PolicyVersion.create(policy, first, 2, 1, 500, true, 10_000, "점검 주기를 검토했습니다.", List.of());
+        ReflectionTestUtils.setField(second, "id", 12L);
+        final Instant createdAt = Instant.parse("2026-10-24T10:00:00Z");
+        ReflectionTestUtils.setField(second, "createdAt", createdAt);
+        when(policyVersionRepository.findMemberVersions(3L, 10L)).thenReturn(List.of(second, first));
+
+        // when
+        final PolicyVersionListResponse response = policyService.getMyPolicyVersions(jwt, 3L);
+
+        // then
+        assertThat(response.items())
+                .extracting(PolicyVersionListResponse.Item::versionId,
+                        PolicyVersionListResponse.Item::versionNo,
+                        PolicyVersionListResponse.Item::parentVersionId)
+                .containsExactly(
+                        tuple(12L, 2, 11L),
+                        tuple(11L, 1, null)
+                );
+        assertThat(response.items().get(0).changeReason()).isEqualTo(second.getChangeReason());
+        assertThat(response.items().get(0).createdAt()).isEqualTo(createdAt);
+        assertThat(response.items().get(1).changeReason()).isNull();
+    }
+
+    @Test
+    void 조회할_내_규칙의_버전_목록이_없으면_404로_처리한다() {
+        // given
+        when(policyVersionRepository.findMemberVersions(3L, 10L)).thenReturn(List.of());
+
+        // when & then
+        assertThatThrownBy(() -> policyService.getMyPolicyVersions(jwt, 3L))
                 .isInstanceOf(PolicyException.class)
                 .satisfies(exception -> {
                     final PolicyException policyException = (PolicyException) exception;

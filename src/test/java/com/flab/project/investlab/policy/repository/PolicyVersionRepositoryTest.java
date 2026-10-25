@@ -196,6 +196,102 @@ class PolicyVersionRepositoryTest {
         assertThat(found).isEmpty();
     }
 
+    @Test
+    void 버전_목록은_해당_규칙만_버전_번호_내림차순으로_조회한다() {
+        // given
+        final Member member = entityManager.persist(new Member("member@example.com", "encoded-password", "investor"));
+        final Policy policy = entityManager.persist(new Policy(member, "내 규칙"));
+        final Policy otherPolicy = entityManager.persist(new Policy(member, "다른 규칙"));
+        final PolicyVersion first = persistVersion(policy, 1);
+        final PolicyVersion second = persistVersion(policy, 2);
+        final PolicyVersion third = persistVersion(policy, 3);
+        persistVersion(otherPolicy, 1);
+        entityManager.flush();
+        entityManager.clear();
+
+        // when
+        final List<PolicyVersion> found = policyVersionRepository.findMemberVersions(policy.getId(), member.getId());
+
+        // then
+        assertThat(found).extracting(PolicyVersion::getId)
+                .containsExactly(third.getId(), second.getId(), first.getId());
+    }
+
+    @Test
+    void 다른_회원의_버전_목록은_조회하지_않는다() {
+        // given
+        final Member owner = entityManager.persist(new Member("owner@example.com", "encoded-password", "owner"));
+        final Member other = entityManager.persist(new Member("other@example.com", "encoded-password", "other"));
+        final Policy policy = entityManager.persist(new Policy(owner, "주인 규칙"));
+        persistVersion(policy, 1);
+        entityManager.flush();
+        entityManager.clear();
+
+        // when
+        final List<PolicyVersion> found = policyVersionRepository.findMemberVersions(policy.getId(), other.getId());
+
+        // then
+        assertThat(found).isEmpty();
+    }
+
+    @Test
+    void 프리셋의_버전_목록은_내_규칙으로_조회하지_않는다() {
+        // given
+        final Member member = entityManager.persist(new Member("member@example.com", "encoded-password", "investor"));
+        final Policy preset = entityManager.persist(new Policy(null, "프리셋"));
+        persistVersion(preset, 1);
+        entityManager.flush();
+        entityManager.clear();
+
+        // when
+        final List<PolicyVersion> found = policyVersionRepository.findMemberVersions(preset.getId(), member.getId());
+
+        // then
+        assertThat(found).isEmpty();
+    }
+
+    @Test
+    void 없는_규칙의_버전_목록은_빈_결과를_반환한다() {
+        // given
+        final Member member = entityManager.persist(new Member("member@example.com", "encoded-password", "investor"));
+        final Policy policy = entityManager.persist(new Policy(member, "내 규칙"));
+        persistVersion(policy, 1);
+        entityManager.flush();
+        entityManager.clear();
+
+        // when
+        final List<PolicyVersion> found = policyVersionRepository.findMemberVersions(Long.MAX_VALUE, member.getId());
+
+        // then
+        assertThat(found).isEmpty();
+    }
+
+    @Test
+    void 버전_목록은_배분과_정책과_부모_본문을_가져오지_않는다() {
+        // given
+        final Policy preset = entityManager.persist(new Policy(null, "프리셋"));
+        final PolicyVersion source = persistVersion(preset, 1);
+        final Member member = entityManager.persist(new Member("member@example.com", "encoded-password", "investor"));
+        final Policy policy = entityManager.persist(new Policy(member, "내 규칙"));
+        entityManager.persist(PolicyVersion.create(policy, source, 1, 1, 500, true, 10_000, null, List.of()));
+        entityManager.flush();
+        entityManager.clear();
+
+        // when
+        final List<PolicyVersion> found = policyVersionRepository.findMemberVersions(policy.getId(), member.getId());
+
+        // then
+        assertThat(found).hasSize(1);
+        final PolicyVersion version = found.get(0);
+        final PersistenceUnitUtil persistenceUnitUtil = entityManager.getEntityManager()
+                .getEntityManagerFactory()
+                .getPersistenceUnitUtil();
+        assertThat(persistenceUnitUtil.isLoaded(version, "allocations")).isFalse();
+        assertThat(persistenceUnitUtil.isLoaded(version, "policy")).isFalse();
+        assertThat(version.getParentVersion().getId()).isEqualTo(source.getId());
+        assertThat(persistenceUnitUtil.isLoaded(version, "parentVersion")).isFalse();
+    }
+
     private PolicyVersion persistVersion(final Policy policy, final int versionNo) {
         final Instrument instrument = instrumentRepository.findAllByOrderByNameAsc().get(0);
         final PolicyVersion version = PolicyVersion.create(policy, null, versionNo, 1, 500, true, 0, null, List.of(
